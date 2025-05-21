@@ -1,0 +1,8 @@
+namespace SnapLayout
+{
+    [default_interface]
+    runtimeclass AcrylicVisualWindow : WinUI3Package.TransparentWindow
+    {
+        AcrylicVisualWindow();
+    }
+}

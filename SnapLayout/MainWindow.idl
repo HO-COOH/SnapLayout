@@ -1,0 +1,8 @@
+namespace SnapLayout
+{
+    [default_interface]
+    runtimeclass MainWindow : WinUI3Package.TransparentWindow
+    {
+        MainWindow();
+    }
+}
