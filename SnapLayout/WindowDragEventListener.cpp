@@ -9,13 +9,24 @@ HWND WindowDragEventListener::g_hwndTracked;
 HWINEVENTHOOK WindowDragEventListener::g_hEventHook;
 RECT WindowDragEventListener::g_rcInitial;
 RECT WindowDragEventListener::g_beforeHide;
+extern bool HasLButtonDown;
+
+static bool isWindowResizable(HWND hwnd)
+{
+	return GetWindowLongPtr(hwnd, GWL_STYLE) & WS_THICKFRAME;
+}
 
 VOID WindowDragEventListener::WinEventProc(HWINEVENTHOOK hWinEventHook, DWORD event, HWND hwnd, LONG idObject, LONG idChild, DWORD dwEventThread, DWORD dwmsEventTime)
 {
     if (idObject != OBJID_WINDOW || idChild != CHILDID_SELF)
         return;
 
-    if (event == EVENT_SYSTEM_MOVESIZESTART) {
+    if (event == EVENT_SYSTEM_MOVESIZESTART) 
+    {
+		//Non-resizable window should not trigger snap layout
+        if (!isWindowResizable(hwnd) || !HasLButtonDown)
+            return;
+
         DWORD pid;
         GetWindowThreadProcessId(hwnd, &pid);
         if (pid != GetCurrentProcessId()) {

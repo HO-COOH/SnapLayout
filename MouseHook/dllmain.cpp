@@ -6,6 +6,7 @@
 HHOOK g_hMouseHook = nullptr;
 HWND g_targetHwnd = nullptr;
 bool g_isOnWindow = false;
+bool* g_hasLButtonDown = nullptr;
 
 extern "C" __declspec(dllexport) void UnsetHook() {
     if (g_hMouseHook) {
@@ -37,16 +38,21 @@ LRESULT CALLBACK LowLevelMouseProc(int nCode, WPARAM wParam, LPARAM lParam)
             g_isOnWindow = false;
         }
         else if (wParam == WM_LBUTTONUP)
+        {
             PostMessage(g_targetHwnd, WM_LBUTTONUP, 0, 0);
+            *g_hasLButtonDown = false;
+        }
+        else if (wParam == WM_LBUTTONDOWN)
+            *g_hasLButtonDown = true;
     }
     return CallNextHookEx(g_hMouseHook, nCode, wParam, lParam);
 }
 
 // Function to install the hook
-extern "C" __declspec(dllexport) void InstallHook(HWND hwnd) {
+extern "C" __declspec(dllexport) void InstallHook(HWND hwnd, bool* hasLButtonDown) {
     g_targetHwnd = hwnd;
     g_hMouseHook = SetWindowsHookEx(WH_MOUSE_LL, LowLevelMouseProc, GetModuleHandle(nullptr), 0);
-
+	g_hasLButtonDown = hasLButtonDown;
 }
 
 BOOL APIENTRY DllMain( HMODULE hModule,

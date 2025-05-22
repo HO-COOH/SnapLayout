@@ -5,7 +5,7 @@
 #include <inspectable.h>
 #include "WindowDragEventListener.h"
 
-
+bool HasLButtonDown = false;
 // To learn more about WinUI, the WinUI project structure,
 // and more about our project templates, see: http://aka.ms/winui-project-info.
  
@@ -52,11 +52,11 @@ namespace winrt::SnapLayout::implementation
     {
         window = make<MainWindow>();
 
-        using InstallHookFunc = void(*)(HWND);
+        using InstallHookFunc = void(*)(HWND, bool*);
         using UnsetHookFunc = void(*)();
 
         auto lib = LoadLibrary(L"../../MouseHook.dll");
-        reinterpret_cast<InstallHookFunc>(GetProcAddress(lib, "InstallHook"))(MainWindow::g_instance);
+        reinterpret_cast<InstallHookFunc>(GetProcAddress(lib, "InstallHook"))(MainWindow::g_instance, &HasLButtonDown);
 
         winrt::SnapLayout::AcrylicVisualWindow{};
 

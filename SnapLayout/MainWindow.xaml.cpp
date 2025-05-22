@@ -229,6 +229,7 @@ namespace winrt::SnapLayout::implementation
 			GridExitAnimation().Stop();
 			m_shouldHideWindow = false;
 		}
+		m_hasExitCompleted = true;
 		ShowWindow(g_instance, SW_SHOWNOACTIVATE);
 		AppWindow().Presenter().as<winrt::Microsoft::UI::Windowing::OverlappedPresenter>().IsAlwaysOnTop(true);
 		GridAppearAnimation().Begin();
@@ -236,12 +237,12 @@ namespace winrt::SnapLayout::implementation
 
 	void MainWindow::OnDismiss()
 	{
+		m_shouldHideWindow = true;
 		GridAppearAnimation().Stop();
 		if (m_hasExitCompleted)
 		{
 			GridExitAnimation().Begin();
 			m_hasExitCompleted = false;
-			m_shouldHideWindow = true;
 		}
 	}
 
