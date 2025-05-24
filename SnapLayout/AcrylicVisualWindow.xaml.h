@@ -4,6 +4,7 @@
 #include "LayoutResult.h"
 #include <winrt/Microsoft.UI.Content.h>
 #include <winrt/Microsoft.UI.Composition.SystemBackdrops.h>
+#include "RoundedAcrylicVisual.h"
 
 namespace winrt::SnapLayout::implementation
 {
@@ -15,9 +16,7 @@ namespace winrt::SnapLayout::implementation
 
         winrt::Microsoft::UI::Content::ContentExternalBackdropLink m_backdropLink{ nullptr };
         winrt::Microsoft::UI::Composition::SystemBackdrops::DesktopAcrylicController m_controller{ nullptr };
-        winrt::Microsoft::UI::Composition::Visual m_placementVisual{ nullptr };
-        winrt::Microsoft::UI::Composition::Compositor m_compositor{ nullptr };
-        winrt::Microsoft::UI::Composition::RectangleClip m_clip{ nullptr };
+		RoundedAcrylicVisual m_acrylicVisual{ nullptr };
 
         // play an animation from the current dragging window position to the final layout position
         void SetVisualPosition(LayoutResult position, UINT dpi);

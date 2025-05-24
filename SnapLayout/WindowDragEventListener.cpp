@@ -49,12 +49,27 @@ VOID WindowDragEventListener::WinEventProc(HWINEVENTHOOK hWinEventHook, DWORD ev
         }
         //winrt::SnapLayout::implementation::MainWindow::GetInstance()->OnDismiss();
     }
+    else if (event == EVENT_OBJECT_CREATE)
+    {
+        if (IsWindow(hwnd))
+        {
+			wchar_t title[256];
+			auto count = GetWindowText(hwnd, title, std::size(title) - 2);
+			title[count] = L'\n';
+			title[count + 1] = L'\0';
+            OutputDebugStringW(title);
+        }
+    }
+    else if (event == EVENT_OBJECT_DESTROY)
+    {
+		OutputDebugStringA("Window destroyed.\n");
+    }
 }
 
 void WindowDragEventListener::Set()
 {
     g_hEventHook = SetWinEventHook(
-        EVENT_SYSTEM_MOVESIZESTART, EVENT_SYSTEM_MOVESIZEEND,
+        EVENT_SYSTEM_MOVESIZESTART, EVENT_OBJECT_DESTROY,
         NULL, WinEventProc,
         0, 0,
         WINEVENT_OUTOFCONTEXT | WINEVENT_SKIPOWNPROCESS

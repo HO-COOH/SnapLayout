@@ -4,8 +4,12 @@
     <ApplicationDefinition Include="App.xaml" />
   </ItemGroup>
   <ItemGroup>
-    <Page Include="MainWindow.xaml" />
-    <Page Include="AcrylicVisualWindow.xaml" />
+    <Page Include="AcrylicVisualWindow.xaml">
+      <Filter>Window</Filter>
+    </Page>
+    <Page Include="MainWindow.xaml">
+      <Filter>Window</Filter>
+    </Page>
   </ItemGroup>
   <ItemGroup>
     <Midl Include="MainWindow.idl" />
@@ -13,28 +17,62 @@
   <ItemGroup>
     <ClCompile Include="pch.cpp" />
     <ClCompile Include="$(GeneratedFilesDir)module.g.cpp" />
-    <ClCompile Include="ThumbnailVisual.cpp" />
-    <ClCompile Include="DwmPrivateApi.cpp" />
-    <ClCompile Include="User32PrivateApi.cpp" />
-    <ClCompile Include="ThumbnailVisualContainerWindow.cpp" />
-    <ClCompile Include="WindowDragEventListener.cpp" />
     <ClCompile Include="DirectXFactory.cpp" />
     <ClCompile Include="LayoutFunctions.cpp" />
+    <ClCompile Include="DwmPrivateApi.cpp">
+      <Filter>PrivateApi</Filter>
+    </ClCompile>
+    <ClCompile Include="User32PrivateApi.cpp">
+      <Filter>PrivateApi</Filter>
+    </ClCompile>
+    <ClCompile Include="ThumbnailVisualContainerWindow.cpp">
+      <Filter>Window</Filter>
+    </ClCompile>
+    <ClCompile Include="WindowDragEventListener.cpp">
+      <Filter>Utils</Filter>
+    </ClCompile>
+    <ClCompile Include="ThumbnailVisual.cpp">
+      <Filter>Visual</Filter>
+    </ClCompile>
+    <ClCompile Include="RoundedAcrylicVisual.cpp">
+      <Filter>Visual</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="pch.h" />
-    <ClInclude Include="ThumbnailVisual.h" />
-    <ClInclude Include="DwmPrivateApi.h" />
-    <ClInclude Include="User32PrivateApi.h" />
-    <ClInclude Include="BaseWindow.hpp" />
-    <ClInclude Include="ThumbnailVisualContainerWindow.h" />
-    <ClInclude Include="WindowDragEventListener.h" />
-    <ClInclude Include="Interop.hpp" />
     <ClInclude Include="DirectXFactory.h" />
     <ClInclude Include="LayoutResult.h" />
     <ClInclude Include="LayoutFunctions.h" />
-    <ClInclude Include="DpiUtils.hpp" />
-    <ClInclude Include="WindowUtils.hpp" />
+    <ClInclude Include="DwmPrivateApi.h">
+      <Filter>PrivateApi</Filter>
+    </ClInclude>
+    <ClInclude Include="User32PrivateApi.h">
+      <Filter>PrivateApi</Filter>
+    </ClInclude>
+    <ClInclude Include="ThumbnailVisualContainerWindow.h">
+      <Filter>Window</Filter>
+    </ClInclude>
+    <ClInclude Include="WindowDragEventListener.h">
+      <Filter>Utils</Filter>
+    </ClInclude>
+    <ClInclude Include="WindowUtils.hpp">
+      <Filter>Utils</Filter>
+    </ClInclude>
+    <ClInclude Include="ThumbnailVisual.h">
+      <Filter>Visual</Filter>
+    </ClInclude>
+    <ClInclude Include="RoundedAcrylicVisual.h">
+      <Filter>Visual</Filter>
+    </ClInclude>
+    <ClInclude Include="DpiUtils.hpp">
+      <Filter>Utils</Filter>
+    </ClInclude>
+    <ClInclude Include="Interop.hpp">
+      <Filter>PrivateApi</Filter>
+    </ClInclude>
+    <ClInclude Include="BaseWindow.hpp">
+      <Filter>Window</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <Image Include="Assets\Wide310x150Logo.scale-200.png">
@@ -62,6 +100,18 @@
   <ItemGroup>
     <Filter Include="Assets">
       <UniqueIdentifier>{03c1e97e-74f6-4311-8e75-82951eb41de5}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="PrivateApi">
+      <UniqueIdentifier>{120fa4e6-55b9-4301-b9ae-5f2c8afe3437}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Window">
+      <UniqueIdentifier>{2722804b-6817-4c0a-8fc4-a58e6d7bf9ba}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Utils">
+      <UniqueIdentifier>{0d0858a4-f374-49ad-b85c-750a5ad2062a}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Visual">
+      <UniqueIdentifier>{107cbbe8-b6a0-495c-a964-004b513a77a5}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
   <ItemGroup>

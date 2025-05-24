@@ -131,6 +131,7 @@
     <ClInclude Include="MainWindow.xaml.h">
       <DependentUpon>MainWindow.xaml</DependentUpon>
     </ClInclude>
+    <ClInclude Include="RoundedAcrylicVisual.h" />
     <ClInclude Include="ThumbnailVisual.h" />
     <ClInclude Include="ThumbnailVisualContainerWindow.h" />
     <ClInclude Include="User32PrivateApi.h" />
@@ -162,6 +163,7 @@
       <DependentUpon>MainWindow.xaml</DependentUpon>
     </ClCompile>
     <ClCompile Include="$(GeneratedFilesDir)module.g.cpp" />
+    <ClCompile Include="RoundedAcrylicVisual.cpp" />
     <ClCompile Include="ThumbnailVisual.cpp" />
     <ClCompile Include="ThumbnailVisualContainerWindow.cpp" />
     <ClCompile Include="User32PrivateApi.cpp" />
