@@ -3,7 +3,9 @@
 #include "ThumbnailVisualContainerWindow.h"
 #include "AcrylicVisualWindow.xaml.h"
 #include "MainWindow.xaml.h"
+#include <dwmapi.h>
 #include <winrt/Microsoft.UI.Windowing.h>
+#include "User32PrivateApi.h"
 
 HWND WindowDragEventListener::g_hwndTracked;
 HWINEVENTHOOK WindowDragEventListener::g_hEventHook;
@@ -83,7 +85,7 @@ void WindowDragEventListener::Set()
 void WindowDragEventListener::HideDraggedWindow()
 {
     /*Nope, DwmSetWindowAttribute cannot be used to "fix" a thumbnail visual when hiding a window */
-    //BOOL value = true;
+    BOOL value = true;
     //winrt::check_hresult(DwmSetWindowAttribute(WindowDragEventListener::g_hwndTracked, DWMWA_FREEZE_REPRESENTATION, &value, sizeof(value)));
     //ShowWindow(WindowDragEventListener::g_hwndTracked, SW_HIDE);
 
@@ -91,8 +93,16 @@ void WindowDragEventListener::HideDraggedWindow()
     //winrt::check_bool(GetWindowRect(g_hwndTracked, &g_beforeHide));
     //winrt::check_bool(SetWindowPos(g_hwndTracked, nullptr, 9999, 9999, 0, 0, SWP_NOZORDER | SWP_NOSIZE | SWP_NOACTIVATE));
 
-    //ThumbnailVisualContainerWindow::Instance().SetVisual(g_hwndTracked, g_rcInitial);
+    ThumbnailVisualContainerWindow::Instance().SetVisual(g_hwndTracked, g_rcInitial);
     //ShowWindow(g_hwndTracked, SW_MINIMIZE);
+    
+    
+    //BOOL value = true;
+	//winrt::check_hresult(DwmSetWindowAttribute(WindowDragEventListener::g_hwndTracked, DWMWA_CLOAK, &value, sizeof(value)));
+    
+	/*BOOL value = true;
+    WINDOWCOMPOSITIONATTRIBDATA data{ .Attrib = WCA_CLOAK, .pvData = &value, .cbData = sizeof(value) };
+	winrt::check_bool(User32PrivateApi::SetWindowCompositionAttribute(WindowDragEventListener::g_hwndTracked, &data));*/
     OutputDebugString(L"Window moved offscreen\n");
 }
 

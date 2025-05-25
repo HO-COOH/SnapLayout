@@ -45,7 +45,7 @@ class User32PrivateApi
 		IN HWND hwnd,
 		IN WINDOWCOMPOSITIONATTRIBDATA* pwcad);
 
-    wil::unique_hmodule lib{ LoadLibrary(L"dwmapi.dll") };
+    wil::unique_hmodule lib{ LoadLibrary(L"user32.dll") };
 
     SetWindowCompositionAttributeFunc lSetWindowCompositionAttribute{ reinterpret_cast<SetWindowCompositionAttributeFunc>(GetProcAddress(lib.get(), "SetWindowCompositionAttribute")) };
 

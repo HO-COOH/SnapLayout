@@ -74,3 +74,4 @@ DECLARE_INTERFACE_IID_(IInteropCompositorFactoryPartner, IInspectable, "22118adf
         OUT bool* enableExposeVisual
         ) PURE;
 };
+

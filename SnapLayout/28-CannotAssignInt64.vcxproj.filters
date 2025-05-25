@@ -37,6 +37,9 @@
     <ClCompile Include="RoundedAcrylicVisual.cpp">
       <Filter>Visual</Filter>
     </ClCompile>
+    <ClCompile Include="FreezableThumbnailVisual.cpp">
+      <Filter>Visual</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="pch.h" />
@@ -72,6 +75,9 @@
     </ClInclude>
     <ClInclude Include="BaseWindow.hpp">
       <Filter>Window</Filter>
+    </ClInclude>
+    <ClInclude Include="FreezableThumbnailVisual.h">
+      <Filter>Visual</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

@@ -23,3 +23,8 @@
 #include <winrt/Microsoft.UI.Xaml.Shapes.h>
 #include <winrt/Microsoft.UI.Dispatching.h>
 #include <wil/cppwinrt_helpers.h>
+
+//Win2d
+#include <winrt/Microsoft.graphics.Canvas.h>
+#include <winrt/Microsoft.Graphics.Canvas.UI.h>
+#include <winrt/Microsoft.Graphics.Canvas.UI.Composition.h>

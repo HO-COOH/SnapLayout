@@ -4,6 +4,7 @@
 #include <winrt/Windows.UI.Core.h>
 #include <inspectable.h>
 #include "WindowDragEventListener.h"
+#include "ThumbnailVisualContainerWindow.h"
 
 bool HasLButtonDown = false;
 // To learn more about WinUI, the WinUI project structure,
@@ -70,5 +71,13 @@ namespace winrt::SnapLayout::implementation
 
         //window->SetVisual(FindWindow(L"Shell_TrayWnd", NULL));
         WindowDragEventListener::Set();
+
+        //TODO: Debug only
+        //ThumbnailVisualContainerWindow::Instance().SetVisual(
+        //    FindWindowW(L"Shell_TrayWnd", nullptr),
+        //    { 0, 0, 300, 300 }
+        //);
+
+        ThumbnailVisualContainerWindow::Instance();
     }
 }

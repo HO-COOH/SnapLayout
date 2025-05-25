@@ -7,6 +7,10 @@ class ThumbnailVisualContainerWindow : public BaseWindow<ThumbnailVisualContaine
 	winrt::Windows::UI::Composition::Compositor compositor{ nullptr };
 	winrt::Windows::UI::Composition::ContainerVisual root{ nullptr };
 
+
+	winrt::Microsoft::Graphics::Canvas::CanvasDevice canvasDevice;
+	winrt::Windows::UI::Composition::CompositionGraphicsDevice compositionGraphicsDevice{ nullptr };
+	winrt::Windows::UI::Composition::CompositionDrawingSurface surface{ nullptr };
 	ThumbnailVisualContainerWindow();
 public:
 	void SetVisual(HWND sourceHwnd, RECT windowPosition);

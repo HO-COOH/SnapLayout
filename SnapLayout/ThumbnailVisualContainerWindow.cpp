@@ -2,7 +2,9 @@
 #include "ThumbnailVisualContainerWindow.h"
 #include "Interop.hpp"
 #include "DirectXFactory.h"
-#include "ThumbnailVisual.h"
+#include "FreezableThumbnailVisual.h"
+#include <winrt/Windows.Graphics.Capture.h>
+#include <windows.ui.composition.interop.h>
 
 ThumbnailVisualContainerWindow::ThumbnailVisualContainerWindow() : BaseWindow{
 		L"ThumbnailVisualContainer",
@@ -32,13 +34,25 @@ ThumbnailVisualContainerWindow::ThumbnailVisualContainerWindow() : BaseWindow{
 	root = compositor.CreateContainerVisual();
 	dcompTarget.as<winrt::Windows::UI::Composition::CompositionTarget>().Root(root);
 	dcompTarget.detach();
+
+	compositionGraphicsDevice = winrt::Microsoft::Graphics::Canvas::UI::Composition::CanvasComposition::CreateCompositionGraphicsDevice(
+		compositor,
+		canvasDevice
+	);
+	surface = compositionGraphicsDevice.CreateDrawingSurface(
+		{ 1000, 640 },
+		winrt::Windows::Graphics::DirectX::DirectXPixelFormat::B8G8R8A8UIntNormalized,
+		winrt::Windows::Graphics::DirectX::DirectXAlphaMode::Premultiplied
+	);
 }
 
 void ThumbnailVisualContainerWindow::SetVisual(HWND sourceHwnd, RECT windowPosition)
 {
-	ThumbnailVisual visual = { sourceHwnd, m_hwnd.get(),
-		compositor.as<IDCompositionDesktopDevice>().get()
-	};
+	//ThumbnailVisual visual = { sourceHwnd, m_hwnd.get(),
+	//	compositor.as<IDCompositionDesktopDevice>().get()
+	//};
+	
+	FreezableThumbnailVisual visual{ sourceHwnd, m_hwnd.get(), compositor, surface, canvasDevice };
 	auto animation = compositor.CreateVector3KeyFrameAnimation();
 	animation.InsertKeyFrame(1.f, { 0.2f, 0.2f, 1.f });
 	animation.Duration(std::chrono::seconds{ 5 });
