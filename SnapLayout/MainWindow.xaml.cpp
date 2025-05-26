@@ -16,6 +16,7 @@
 #include <dwmapi.h>
 #include "AcrylicVisualWindow.xaml.h"
 #include "ThumbnailVisualContainerWindow.h"
+#include "DebugHelper.hpp"
 #pragma comment(lib, "Dwmapi.lib")
 #pragma comment(lib, "Comctl32.lib")
 
@@ -54,7 +55,7 @@ namespace winrt::SnapLayout::implementation
 
 	void MainWindow::Grid_PointerEntered(winrt::Windows::Foundation::IInspectable const& sender, winrt::Microsoft::UI::Xaml::Input::PointerRoutedEventArgs const& e)
 	{
-		OutputDebugString(L"Pointer entered\n");
+		DebugLog(L"Pointer entered\n");
 	}
 
 	LRESULT MainWindow::subclassProc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam, UINT_PTR uIdSubClass, DWORD_PTR dwRefData)
@@ -102,8 +103,8 @@ namespace winrt::SnapLayout::implementation
 								MonitorFromWindow(g_instance, MONITOR_DEFAULTTONEAREST)
 							);
 
-							ScreenToClient(WindowDragEventListener::g_hwndTracked, &point);
-							OutputDebugString(std::format(L"Dragged client: {}, {}\n", point.x, point.y).data());
+							ScreenToClient(WindowDragEventListener::GetDraggedWindow(), &point);
+							DebugLog(L"Dragged client: {}, {}\n", point.x, point.y);
 
 							WindowDragEventListener::HideDraggedWindow();
 						}
@@ -135,13 +136,15 @@ namespace winrt::SnapLayout::implementation
 			{
 				auto self = reinterpret_cast<MainWindow*>(dwRefData);
 				self->OnDismiss();
-				if (!WindowDragEventListener::g_hwndTracked)
+
+				auto const draggedWindow = WindowDragEventListener::GetDraggedWindow();
+				if (!draggedWindow)
 					break;
 
 	
 				if (self->m_previousButton)
 				{
-					winrt::check_bool(SetWindowPos(WindowDragEventListener::g_hwndTracked, nullptr,
+					winrt::check_bool(SetWindowPos(draggedWindow, nullptr,
 						self->m_previousButtonWindowPlacement.x,
 						self->m_previousButtonWindowPlacement.y,
 						self->m_previousButtonWindowPlacement.width,

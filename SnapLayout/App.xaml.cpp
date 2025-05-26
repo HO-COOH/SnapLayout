@@ -5,6 +5,7 @@
 #include <inspectable.h>
 #include "WindowDragEventListener.h"
 #include "ThumbnailVisualContainerWindow.h"
+#include "MouseHookDll.h"
 
 bool HasLButtonDown = false;
 // To learn more about WinUI, the WinUI project structure,
@@ -36,6 +37,7 @@ namespace winrt::SnapLayout::implementation
 #if defined _DEBUG && !defined DISABLE_XAML_GENERATED_BREAK_ON_UNHANDLED_EXCEPTION
         UnhandledException([](winrt::Windows::Foundation::IInspectable const&, winrt::Microsoft::UI::Xaml::UnhandledExceptionEventArgs const& e)
         {
+            WindowDragEventListener::Unset();
             if (IsDebuggerPresent())
             {
                 auto errorMessage = e.Message();
@@ -52,15 +54,9 @@ namespace winrt::SnapLayout::implementation
     void App::OnLaunched([[maybe_unused]] winrt::Microsoft::UI::Xaml::LaunchActivatedEventArgs const& e)
     {
         window = make<MainWindow>();
-
-        using InstallHookFunc = void(*)(HWND, bool*);
-        using UnsetHookFunc = void(*)();
-
-        auto lib = LoadLibrary(L"../../MouseHook.dll");
-        reinterpret_cast<InstallHookFunc>(GetProcAddress(lib, "InstallHook"))(MainWindow::g_instance, &HasLButtonDown);
-
         winrt::SnapLayout::AcrylicVisualWindow{};
 
+        MouseHookDll::Set(MainWindow::g_instance, HasLButtonDown);
         //CoreDispatcher internally creates a DispatcherQueue if it doesn't exist (and if you are on 15063 or newer)
         auto dispatcher = winrt::try_get_activation_factory<winrt::Windows::UI::Core::CoreDispatcher, IInternalCoreDispatcherStatic>();
 

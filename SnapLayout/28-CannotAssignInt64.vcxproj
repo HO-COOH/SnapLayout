@@ -118,6 +118,7 @@
       <SubType>Code</SubType>
     </ClInclude>
     <ClInclude Include="BaseWindow.hpp" />
+    <ClInclude Include="DebugHelper.hpp" />
     <ClInclude Include="DirectXFactory.h" />
     <ClInclude Include="DpiUtils.hpp" />
     <ClInclude Include="DwmPrivateApi.h" />
@@ -125,6 +126,7 @@
     <ClInclude Include="Interop.hpp" />
     <ClInclude Include="LayoutFunctions.h" />
     <ClInclude Include="LayoutResult.h" />
+    <ClInclude Include="MouseHookDll.h" />
     <ClInclude Include="pch.h" />
     <ClInclude Include="App.xaml.h">
       <DependentUpon>App.xaml</DependentUpon>
@@ -155,6 +157,7 @@
     <ClCompile Include="DwmPrivateApi.cpp" />
     <ClCompile Include="FreezableThumbnailVisual.cpp" />
     <ClCompile Include="LayoutFunctions.cpp" />
+    <ClCompile Include="MouseHookDll.cpp" />
     <ClCompile Include="pch.cpp">
       <PrecompiledHeader>Create</PrecompiledHeader>
     </ClCompile>

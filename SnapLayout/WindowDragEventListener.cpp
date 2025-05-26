@@ -5,12 +5,10 @@
 #include "MainWindow.xaml.h"
 #include <dwmapi.h>
 #include <winrt/Microsoft.UI.Windowing.h>
-#include "User32PrivateApi.h"
+#include "DebugHelper.hpp"
+#include <optional>
 
-HWND WindowDragEventListener::g_hwndTracked;
-HWINEVENTHOOK WindowDragEventListener::g_hEventHook;
-RECT WindowDragEventListener::g_rcInitial;
-RECT WindowDragEventListener::g_beforeHide;
+static std::optional<WindowDragEventListener> g_eventListener;
 extern bool HasLButtonDown;
 
 static bool isWindowResizable(HWND hwnd)
@@ -23,63 +21,95 @@ VOID WindowDragEventListener::WinEventProc(HWINEVENTHOOK hWinEventHook, DWORD ev
     if (idObject != OBJID_WINDOW || idChild != CHILDID_SELF)
         return;
 
-    if (event == EVENT_SYSTEM_MOVESIZESTART) 
+    switch (event)
     {
-		//Non-resizable window should not trigger snap layout
-        if (!isWindowResizable(hwnd) || !HasLButtonDown)
-            return;
+	    case EVENT_SYSTEM_MOVESIZESTART: return onMoveSizeStart(event, hwnd, idObject, idChild, dwEventThread, dwmsEventTime);
+		case EVENT_SYSTEM_MOVESIZEEND: return onMoveSizeEnd(event, hwnd, idObject, idChild, dwEventThread, dwmsEventTime);
+		case EVENT_OBJECT_CREATE: return onObjectCreate(event, hwnd, idObject, idChild, dwEventThread, dwmsEventTime);
+		case EVENT_OBJECT_DESTROY: return onObjectDestroy(event, hwnd, idObject, idChild, dwEventThread, dwmsEventTime);
+        default:    return;
+    }
+}
 
-        DWORD pid;
-        GetWindowThreadProcessId(hwnd, &pid);
-        if (pid != GetCurrentProcessId()) {
-            g_hwndTracked = hwnd;
-            winrt::check_bool(GetWindowRect(hwnd, &g_rcInitial));
-            winrt::SnapLayout::implementation::MainWindow::GetInstance()->OnShow();
-            OutputDebugStringA("Move/Resize started on window 0x%p\n");
-        }
-    }
-    else if (event == EVENT_SYSTEM_MOVESIZEEND) 
+void WindowDragEventListener::onMoveSizeStart(DWORD event, HWND hwnd, LONG idObject, LONG idChild, DWORD dwEventThread, DWORD dwmsEventTime)
+{
+    //Non-resizable window should not trigger snap layout
+    if (!isWindowResizable(hwnd) || !HasLButtonDown)
+        return;
+
+    DWORD pid;
+    GetWindowThreadProcessId(hwnd, &pid);
+    if (pid != GetCurrentProcessId()) 
     {
-        if (hwnd == g_hwndTracked)
-        {
-            RECT rcFinal;
-            GetWindowRect(hwnd, &rcFinal);
-            if (memcmp(&rcFinal, &g_rcInitial, sizeof(RECT)) != 0) {
-                OutputDebugStringA("Window was moved.\n");
-            }
-            g_hwndTracked = NULL;
-        }
-        //winrt::SnapLayout::implementation::MainWindow::GetInstance()->OnDismiss();
+        g_eventListener->g_hwndTracked = hwnd;
+        winrt::check_bool(GetWindowRect(hwnd, &g_eventListener->g_rcInitial));
+        winrt::SnapLayout::implementation::MainWindow::GetInstance()->OnShow();
+        DebugLog("Move/Resize started on window");
     }
-    else if (event == EVENT_OBJECT_CREATE)
+}
+
+void WindowDragEventListener::onMoveSizeEnd(DWORD event, HWND hwnd, LONG idObject, LONG idChild, DWORD dwEventThread, DWORD dwmsEventTime)
+{
+    if (hwnd != g_eventListener->g_hwndTracked)
+        return;
+
+
+    RECT rcFinal;
+    GetWindowRect(hwnd, &rcFinal);
+    if (memcmp(&rcFinal, &g_eventListener->g_rcInitial, sizeof(RECT)) != 0) {
+        DebugLog("Window was moved.\n");
+    }
+    g_eventListener->g_hwndTracked = NULL;
+    //winrt::SnapLayout::implementation::MainWindow::GetInstance()->OnDismiss();
+}
+
+void WindowDragEventListener::onObjectCreate(DWORD event, HWND hwnd, LONG idObject, LONG idChild, DWORD dwEventThread, DWORD dwmsEventTime)
+{
+    if (IsWindow(hwnd))
     {
-        if (IsWindow(hwnd))
-        {
-			wchar_t title[256];
-			auto count = GetWindowText(hwnd, title, std::size(title) - 2);
-			title[count] = L'\n';
-			title[count + 1] = L'\0';
-            OutputDebugStringW(title);
-        }
+        wchar_t title[256];
+        auto count = GetWindowText(hwnd, title, std::size(title) - 2);
+        title[count] = L'\n';
+        title[count + 1] = L'\0';
+        DebugLog(L"{}\n", title);
     }
-    else if (event == EVENT_OBJECT_DESTROY)
-    {
-		OutputDebugStringA("Window destroyed.\n");
-    }
+}
+
+void WindowDragEventListener::onObjectDestroy(DWORD event, HWND hwnd, LONG idObject, LONG idChild, DWORD dwEventThread, DWORD dwmsEventTime)
+{
+    OutputDebugStringA("Window destroyed.\n");
+}
+
+WindowDragEventListener::WindowDragEventListener(WindowDragEventListener::private_ctor_t, HWINEVENTHOOK hook) : g_hEventHook{ hook }
+{
+    if (!hook)
+        throw std::runtime_error{ "Failed to hook window event" };
 }
 
 void WindowDragEventListener::Set()
 {
-    g_hEventHook = SetWinEventHook(
+    g_eventListener.emplace(WindowDragEventListener::private_ctor_t{}, SetWinEventHook(
         EVENT_SYSTEM_MOVESIZESTART, EVENT_OBJECT_DESTROY,
         NULL, WinEventProc,
         0, 0,
         WINEVENT_OUTOFCONTEXT | WINEVENT_SKIPOWNPROCESS
-    );
+    ));
+}
 
-    if (!g_hEventHook) {
-        fprintf(stderr, "Failed to set event hook.\n");
-    }
+void WindowDragEventListener::Unset()
+{
+    g_eventListener.reset();
+}
+
+HWND WindowDragEventListener::GetDraggedWindow()
+{
+    assert(HasWindowDragging());
+    return g_eventListener->g_hwndTracked;
+}
+
+bool WindowDragEventListener::HasWindowDragging()
+{
+    return g_eventListener->g_hwndTracked != NULL;
 }
 
 void WindowDragEventListener::HideDraggedWindow()
@@ -93,7 +123,7 @@ void WindowDragEventListener::HideDraggedWindow()
     //winrt::check_bool(GetWindowRect(g_hwndTracked, &g_beforeHide));
     //winrt::check_bool(SetWindowPos(g_hwndTracked, nullptr, 9999, 9999, 0, 0, SWP_NOZORDER | SWP_NOSIZE | SWP_NOACTIVATE));
 
-    ThumbnailVisualContainerWindow::Instance().SetVisual(g_hwndTracked, g_rcInitial);
+    ThumbnailVisualContainerWindow::Instance().SetVisual(g_eventListener->g_hwndTracked, g_eventListener->g_rcInitial);
     //ShowWindow(g_hwndTracked, SW_MINIMIZE);
     
     
@@ -103,15 +133,6 @@ void WindowDragEventListener::HideDraggedWindow()
 	/*BOOL value = true;
     WINDOWCOMPOSITIONATTRIBDATA data{ .Attrib = WCA_CLOAK, .pvData = &value, .cbData = sizeof(value) };
 	winrt::check_bool(User32PrivateApi::SetWindowCompositionAttribute(WindowDragEventListener::g_hwndTracked, &data));*/
-    OutputDebugString(L"Window moved offscreen\n");
+    DebugLog(L"Window moved offscreen\n");
 }
 
-void WindowDragEventListener::ShowDraggedWindow()
-{
-
-}
-
-bool WindowDragEventListener::HasWindowDragging()
-{
-    return g_hwndTracked != NULL;
-}

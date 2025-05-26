@@ -40,6 +40,9 @@
     <ClCompile Include="FreezableThumbnailVisual.cpp">
       <Filter>Visual</Filter>
     </ClCompile>
+    <ClCompile Include="MouseHookDll.cpp">
+      <Filter>PrivateApi</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="pch.h" />
@@ -78,6 +81,12 @@
     </ClInclude>
     <ClInclude Include="FreezableThumbnailVisual.h">
       <Filter>Visual</Filter>
+    </ClInclude>
+    <ClInclude Include="DebugHelper.hpp">
+      <Filter>Utils</Filter>
+    </ClInclude>
+    <ClInclude Include="MouseHookDll.h">
+      <Filter>PrivateApi</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
