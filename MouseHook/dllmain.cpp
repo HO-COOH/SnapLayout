@@ -37,7 +37,8 @@ LRESULT CALLBACK LowLevelMouseProc(int nCode, WPARAM wParam, LPARAM lParam)
             PostMessage(g_targetHwnd, WM_MOUSELEAVE, 0, 0);
             g_isOnWindow = false;
         }
-        else if (wParam == WM_LBUTTONUP)
+        
+        if (wParam == WM_LBUTTONUP)
         {
             PostMessage(g_targetHwnd, WM_LBUTTONUP, 0, 0);
             *g_hasLButtonDown = false;

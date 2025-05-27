@@ -27,6 +27,6 @@ public:
 
 	//We cannot use ShowWindow(..., SW_HIIDE) to hide because that will make window thumbnail stop working.
 	//We can instead just move the dragged window to an offscreen position
-	static void HideDraggedWindow();
+	static void HideDraggedWindow(POINT cursorPoint, UINT dpi);
 };
 

@@ -17,6 +17,7 @@
 #include "AcrylicVisualWindow.xaml.h"
 #include "ThumbnailVisualContainerWindow.h"
 #include "DebugHelper.hpp"
+#include <ShellScalingApi.h>
 #pragma comment(lib, "Dwmapi.lib")
 #pragma comment(lib, "Comctl32.lib")
 
@@ -32,19 +33,13 @@ namespace winrt::SnapLayout::implementation
 
 	MainWindow::MainWindow()
 	{
-		MONITORINFO info{ .cbSize = sizeof(info) };
-		auto monitorRect = GetMonitorInfo(MonitorFromPoint({}, MONITOR_DEFAULTTOPRIMARY), &info);
-
-
 		g_instance = GetHwnd(*this);
 
-		auto dpi = GetDpiForWindow(g_instance);
-
-		winrt::Windows::Graphics::SizeInt32 windowSize{ ScaleForDpi<int>(1000, dpi), ScaleForDpi<int>(133, dpi) };
-		auto appWindow = AppWindow();
-		appWindow.MoveAndResize(winrt::Windows::Graphics::RectInt32{ .X = (info.rcMonitor.right - info.rcMonitor.left - windowSize.Width) / 2, .Y = 0, .Width = windowSize.Width, .Height = windowSize.Height });
-		appWindow.Presenter().as<winrt::Microsoft::UI::Windowing::OverlappedPresenter>().IsAlwaysOnTop(true);
-		appWindow.IsShownInSwitchers(false);
+		
+		m_appWindow = AppWindow();
+		
+		m_appWindow.Presenter().as<winrt::Microsoft::UI::Windowing::OverlappedPresenter>().IsAlwaysOnTop(true);
+		m_appWindow.IsShownInSwitchers(false);
 
 		SetWindowSubclass(g_instance,
 			&subclassProc,
@@ -67,6 +62,8 @@ namespace winrt::SnapLayout::implementation
 				if (!WindowDragEventListener::HasWindowDragging())
 					break;
 
+				auto const draggedWindow = WindowDragEventListener::GetDraggedWindow();
+
 				auto self = reinterpret_cast<MainWindow*>(dwRefData);
 				auto const dpi = GetDpiForWindow(hwnd);
 				POINT point{ GET_X_LPARAM(lparam), GET_Y_LPARAM(lparam) };
@@ -78,6 +75,10 @@ namespace winrt::SnapLayout::implementation
 					{ xPos, yPos },
 					self->RootGrid()
 				);
+
+				//TODO: This move needs to be corrected with an offset
+				if (self->thumbnailWindow)
+					self->thumbnailWindow->Move(point.x, point.y);
 
 				for (auto hitTestElement : hitTest)
 				{
@@ -100,13 +101,11 @@ namespace winrt::SnapLayout::implementation
 							self->m_previousButton = button;
 							self->m_previousButtonWindowPlacement = LayoutImpl(GetButtonLayoutResult(button,
 								button.Parent().as<winrt::Microsoft::UI::Xaml::Controls::Grid>()),
-								MonitorFromWindow(g_instance, MONITOR_DEFAULTTONEAREST)
+								MonitorFromWindow(g_instance, MONITOR_DEFAULTTONEAREST),
+								draggedWindow
 							);
-
-							ScreenToClient(WindowDragEventListener::GetDraggedWindow(), &point);
-							DebugLog(L"Dragged client: {}, {}\n", point.x, point.y);
-
-							WindowDragEventListener::HideDraggedWindow();
+							self->thumbnailWindow = &ThumbnailVisualContainerWindow::Instance();
+							WindowDragEventListener::HideDraggedWindow(point, dpi);
 						}
 
 						break;
@@ -128,12 +127,19 @@ namespace winrt::SnapLayout::implementation
 				winrt::get_self<winrt::SnapLayout::implementation::AcrylicVisualWindow>(winrt::SnapLayout::implementation::AcrylicVisualWindow::Instance)->Hide();
 				//ThumbnailVisualContainerWindow::Instance().Hide();
 				winrt::SnapLayout::implementation::AcrylicVisualWindow::Instance.AppWindow().Hide();
-
+				if (self->thumbnailWindow)
+				{
+					self->thumbnailWindow->Hide();
+					self->thumbnailWindow = nullptr;
+				}
 				break;
 			}
 
 			case WM_LBUTTONUP:
 			{
+				if(!WindowDragEventListener::HasWindowDragging())
+					break;
+
 				auto self = reinterpret_cast<MainWindow*>(dwRefData);
 				self->OnDismiss();
 
@@ -161,21 +167,13 @@ namespace winrt::SnapLayout::implementation
 
 	LayoutResult MainWindow::GetButtonLayoutResult(winrt::Microsoft::UI::Xaml::Controls::Button const& button, winrt::Microsoft::UI::Xaml::Controls::Grid const& parentGrid)
 	{
-		auto rowDefinitions = parentGrid.RowDefinitions();
 		/*Instead of calculating rowTotal, buttonRow in two pass, we can hand write one for loop, better performance*/
-		//auto const rowTotal = std::accumulate(
-		//	rowDefinitions.begin(),
-		//	rowDefinitions.end(),
-		//	0.0,
-		//	[](double currentSum, winrt::Microsoft::UI::Xaml::Controls::RowDefinition const& row) {
-		//		return currentSum + row.Height().Value;
-		//});
 
 		auto const buttonRow = winrt::Microsoft::UI::Xaml::Controls::Grid::GetRow(button);
 		auto const buttonRowSpan = winrt::Microsoft::UI::Xaml::Controls::Grid::GetRowSpan(button);
 
 		double rowBeforeButton{}, rowTotal{}, buttonRowTotal{};
-		for (int i = 0; auto row : rowDefinitions)
+		for (int i = 0; auto row : parentGrid.RowDefinitions())
 		{
 			auto const current = row.Height().Value;
 			rowTotal += current;
@@ -225,7 +223,7 @@ namespace winrt::SnapLayout::implementation
 		return winrt::get_self<MainWindow>(Instance);
 	}
 
-	void MainWindow::OnShow()
+	void MainWindow::OnShow(HMONITOR draggedWindowMonitor)
 	{
 		if (!m_hasExitCompleted)
 		{
@@ -233,8 +231,9 @@ namespace winrt::SnapLayout::implementation
 			m_shouldHideWindow = false;
 		}
 		m_hasExitCompleted = true;
+		moveToMonitor(draggedWindowMonitor);
 		ShowWindow(g_instance, SW_SHOWNOACTIVATE);
-		AppWindow().Presenter().as<winrt::Microsoft::UI::Windowing::OverlappedPresenter>().IsAlwaysOnTop(true);
+		m_appWindow.Presenter().as<winrt::Microsoft::UI::Windowing::OverlappedPresenter>().IsAlwaysOnTop(true);
 		GridAppearAnimation().Begin();
 	}
 
@@ -247,6 +246,35 @@ namespace winrt::SnapLayout::implementation
 			GridExitAnimation().Begin();
 			m_hasExitCompleted = false;
 		}
+	}
+
+	void MainWindow::moveToMonitor(HMONITOR monitor)
+	{
+		MONITORINFO info{ .cbSize = sizeof(info) };
+		winrt::check_bool(GetMonitorInfoW(monitor, &info));
+		
+		UINT dpi, dpiY;
+		winrt::check_hresult(GetDpiForMonitor(monitor, MDT_EFFECTIVE_DPI, &dpi, &dpiY));
+
+		winrt::Windows::Graphics::SizeInt32 windowSize{ ScaleForDpi<int>(1000, dpi), ScaleForDpi<int>(133, dpi) };
+		
+		//bug: https://github.com/microsoft/microsoft-ui-xaml/issues/10498
+		//m_appWindow.MoveAndResize(winrt::Windows::Graphics::RectInt32{ 
+		//	.X = info.rcWork.left + (info.rcWork.right - info.rcWork.left - windowSize.Width) / 2, 
+		//	.Y = info.rcWork.top, 
+		//	.Width = windowSize.Width, 
+		//	.Height = windowSize.Height 
+		//});
+
+		winrt::check_bool(SetWindowPos(
+			g_instance,
+			nullptr,
+			info.rcWork.left + (info.rcWork.right - info.rcWork.left - windowSize.Width) / 2,
+			info.rcWork.top,
+			windowSize.Width,
+			windowSize.Height,
+			SWP_NOACTIVATE | SWP_NOZORDER
+		));
 	}
 
 	void MainWindow::OnGridExitAnimationCompleted(

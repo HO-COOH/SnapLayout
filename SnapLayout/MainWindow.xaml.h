@@ -3,6 +3,8 @@
 #include "MainWindow.g.h"
 #include "LayoutResult.h"
 
+class ThumbnailVisualContainerWindow;
+
 namespace winrt::SnapLayout::implementation
 {
     struct MainWindow : MainWindowT<MainWindow>
@@ -29,8 +31,9 @@ namespace winrt::SnapLayout::implementation
         //std::unordered_map<winrt::Microsoft::UI::Xaml::Controls::Button, decltype(&LayoutWindowByButton)> layoutFunctions;
         winrt::Microsoft::UI::Xaml::Controls::Button m_previousButton{ nullptr };
 
-        void OnShow();
+        void OnShow(HMONITOR draggedWindowMonitor);
         void OnDismiss();
+
 
         void OnGridExitAnimationCompleted(
             winrt::Windows::Foundation::IInspectable const& sender,
@@ -40,6 +43,9 @@ namespace winrt::SnapLayout::implementation
         LayoutResult m_previousButtonWindowPlacement;
         static MainWindow* GetInstance();
     private:
+        void moveToMonitor(HMONITOR monitor);
+        ThumbnailVisualContainerWindow* thumbnailWindow{ nullptr };
+        winrt::Microsoft::UI::Windowing::AppWindow m_appWindow{ nullptr };
         bool m_hasExitCompleted = true;
         bool m_shouldHideWindow = true;
         static winrt::SnapLayout::MainWindow Instance;

@@ -7,6 +7,7 @@
 #include <winrt/Microsoft.UI.Windowing.h>
 #include "DebugHelper.hpp"
 #include <optional>
+#include "DpiUtils.hpp"
 
 static std::optional<WindowDragEventListener> g_eventListener;
 extern bool HasLButtonDown;
@@ -39,13 +40,16 @@ void WindowDragEventListener::onMoveSizeStart(DWORD event, HWND hwnd, LONG idObj
 
     DWORD pid;
     GetWindowThreadProcessId(hwnd, &pid);
-    if (pid != GetCurrentProcessId()) 
-    {
-        g_eventListener->g_hwndTracked = hwnd;
-        winrt::check_bool(GetWindowRect(hwnd, &g_eventListener->g_rcInitial));
-        winrt::SnapLayout::implementation::MainWindow::GetInstance()->OnShow();
-        DebugLog("Move/Resize started on window");
-    }
+	static DWORD const pidCurrent = GetCurrentProcessId();
+    if (pid == pidCurrent)
+        return;
+
+
+    g_eventListener->g_hwndTracked = hwnd;
+    winrt::check_bool(GetWindowRect(hwnd, &g_eventListener->g_rcInitial));
+    winrt::SnapLayout::implementation::MainWindow::GetInstance()->OnShow(MonitorFromWindow(hwnd, MONITOR_DEFAULTTONEAREST));
+    DebugLog("Move/Resize started on window");
+
 }
 
 void WindowDragEventListener::onMoveSizeEnd(DWORD event, HWND hwnd, LONG idObject, LONG idChild, DWORD dwEventThread, DWORD dwmsEventTime)
@@ -68,16 +72,15 @@ void WindowDragEventListener::onObjectCreate(DWORD event, HWND hwnd, LONG idObje
     if (IsWindow(hwnd))
     {
         wchar_t title[256];
-        auto count = GetWindowText(hwnd, title, std::size(title) - 2);
-        title[count] = L'\n';
-        title[count + 1] = L'\0';
-        DebugLog(L"{}\n", title);
+        auto count = GetWindowText(hwnd, title, std::size(title));
+        title[count] = L'\0';
+        DebugLog(L"Window created: {}\n", title);
     }
 }
 
 void WindowDragEventListener::onObjectDestroy(DWORD event, HWND hwnd, LONG idObject, LONG idChild, DWORD dwEventThread, DWORD dwmsEventTime)
 {
-    OutputDebugStringA("Window destroyed.\n");
+    DebugLog("Window destroyed.\n");
 }
 
 WindowDragEventListener::WindowDragEventListener(WindowDragEventListener::private_ctor_t, HWINEVENTHOOK hook) : g_hEventHook{ hook }
@@ -112,7 +115,7 @@ bool WindowDragEventListener::HasWindowDragging()
     return g_eventListener->g_hwndTracked != NULL;
 }
 
-void WindowDragEventListener::HideDraggedWindow()
+void WindowDragEventListener::HideDraggedWindow(POINT cursorPoint, UINT dpi)
 {
     /*Nope, DwmSetWindowAttribute cannot be used to "fix" a thumbnail visual when hiding a window */
     BOOL value = true;
@@ -123,7 +126,9 @@ void WindowDragEventListener::HideDraggedWindow()
     //winrt::check_bool(GetWindowRect(g_hwndTracked, &g_beforeHide));
     //winrt::check_bool(SetWindowPos(g_hwndTracked, nullptr, 9999, 9999, 0, 0, SWP_NOZORDER | SWP_NOSIZE | SWP_NOACTIVATE));
 
-    ThumbnailVisualContainerWindow::Instance().SetVisual(g_eventListener->g_hwndTracked, g_eventListener->g_rcInitial);
+    winrt::check_bool(ScreenToClient(g_eventListener->g_hwndTracked, &cursorPoint));
+    
+    ThumbnailVisualContainerWindow::Instance().SetVisual(g_eventListener->g_hwndTracked, { UnscaleForDpi(cursorPoint.x, dpi), UnscaleForDpi(cursorPoint.y, dpi) });
     //ShowWindow(g_hwndTracked, SW_MINIMIZE);
     
     

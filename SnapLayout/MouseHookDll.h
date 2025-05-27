@@ -13,5 +13,6 @@ class MouseHookDll
 	InstallHookFunc installHook = reinterpret_cast<InstallHookFunc>(GetProcAddress(lib.get(), "InstallHook"));
 public:
 	static void Set(HWND targetMessageHwnd, bool& hasLButtonDown);
+	static void Unset();
 };
 

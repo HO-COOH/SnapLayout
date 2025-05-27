@@ -6,22 +6,12 @@
 #include "WindowDragEventListener.h"
 #include "ThumbnailVisualContainerWindow.h"
 #include "MouseHookDll.h"
+#include "Interop.hpp"
 
 bool HasLButtonDown = false;
 // To learn more about WinUI, the WinUI project structure,
 // and more about our project templates, see: http://aka.ms/winui-project-info.
  
-
-//Windows::UI::Core::IInternalCoreDispatcherStatic (14393+)
-DECLARE_INTERFACE_IID_(IInternalCoreDispatcherStatic, IInspectable, "4B4D0861-D718-4F7C-BEC7-735C065F7C73")
-{
-    STDMETHOD(GetForCurrentThread)(
-        winrt::Windows::UI::Core::CoreDispatcher * ppDispatcher
-        ) PURE;
-    STDMETHOD(GetOrCreateForCurrentThread)(
-        winrt::Windows::UI::Core::CoreDispatcher * ppDispatcher
-        ) PURE;
-};
 
 namespace winrt::SnapLayout::implementation
 {
@@ -37,12 +27,15 @@ namespace winrt::SnapLayout::implementation
 #if defined _DEBUG && !defined DISABLE_XAML_GENERATED_BREAK_ON_UNHANDLED_EXCEPTION
         UnhandledException([](winrt::Windows::Foundation::IInspectable const&, winrt::Microsoft::UI::Xaml::UnhandledExceptionEventArgs const& e)
         {
+            MouseHookDll::Unset();
             WindowDragEventListener::Unset();
+            MessageBox(NULL, e.Message().data(), L"An internal error happened and SnapLayout need to exit.", NULL);
             if (IsDebuggerPresent())
             {
                 auto errorMessage = e.Message();
                 __debugbreak();
             }
+            ExitProcess(1);
         });
 #endif
     }
@@ -74,6 +67,6 @@ namespace winrt::SnapLayout::implementation
         //    { 0, 0, 300, 300 }
         //);
 
-        ThumbnailVisualContainerWindow::Instance();
+        ThumbnailVisualContainerWindow::Instance().Hide();
     }
 }

@@ -50,12 +50,12 @@ namespace winrt::SnapLayout::implementation
 		winrt::Microsoft::UI::Xaml::Hosting::ElementCompositionPreview::SetElementChildVisual(element, m_acrylicVisual);
 	}
 
-	void AcrylicVisualWindow::SetVisualPosition(LayoutResult finalLayoutPosition, UINT dpi)
+	void AcrylicVisualWindow::SetVisualPosition(LayoutResult finalLayoutPosition, HWND draggedWindow, UINT dpi)
 	{
-		winrt::check_hresult(SetWindowPos(m_hwnd, WindowDragEventListener::GetDraggedWindow(), 0, 0, 0, 0, SWP_NOMOVE | SWP_NOSIZE | SWP_NOACTIVATE));
+		winrt::check_hresult(SetWindowPos(m_hwnd, draggedWindow, 0, 0, 0, 0, SWP_NOMOVE | SWP_NOSIZE | SWP_NOACTIVATE));
 		ShowWindow(m_hwnd, SW_SHOWNOACTIVATE);
 		RECT draggedWindowPosition{};
-		winrt::check_bool(GetWindowRect(WindowDragEventListener::GetDraggedWindow(), &draggedWindowPosition));
+		winrt::check_bool(GetWindowRect(draggedWindow, &draggedWindowPosition));
 
 		float const unscaledWidth = UnscaleForDpi(draggedWindowPosition.right - draggedWindowPosition.left, dpi);
 		float const unscaledHeight = UnscaleForDpi(draggedWindowPosition.bottom - draggedWindowPosition.top, dpi);

@@ -7,5 +7,11 @@ static std::optional<MouseHookDll> gInstance;
 void MouseHookDll::Set(HWND targetMessageHwnd, bool& hasLButtonDown)
 {
 	gInstance.emplace();
-	gInstance->installHook(targetMessageHwnd, &hasLButtonDown);
+	reinterpret_cast<InstallHookFunc>(GetProcAddress(gInstance->lib.get(), "InstallHook"))(targetMessageHwnd, &hasLButtonDown);
+}
+
+void MouseHookDll::Unset()
+{
+	reinterpret_cast<UnsetHookFunc>(GetProcAddress(gInstance->lib.get(), "UnsetHook"))();
+	gInstance.reset();
 }

@@ -6,7 +6,7 @@
 #include "AcrylicVisualWindow.xaml.h"
 #pragma comment(lib, "Shcore.lib")
 
-LayoutResult LayoutImpl(LayoutResult layoutResult, HMONITOR monitor)
+LayoutResult LayoutImpl(LayoutResult layoutResult, HMONITOR monitor, HWND draggedWindow)
 {
 	LayoutResult windowPlacement = layoutResult;
 
@@ -41,7 +41,7 @@ LayoutResult LayoutImpl(LayoutResult layoutResult, HMONITOR monitor)
 
 	auto acrylicWindow = winrt::get_self<winrt::SnapLayout::implementation::AcrylicVisualWindow>(winrt::SnapLayout::implementation::AcrylicVisualWindow::Instance);
 	acrylicWindow->AppWindow().MoveAndResize({ 0, 0, rcWork.right - rcWork.left, rcWork.bottom - rcWork.top });
-	acrylicWindow->SetVisualPosition(layoutResult, dpiX);
+	acrylicWindow->SetVisualPosition(layoutResult, draggedWindow, dpiX);
 	//Set acrylic window after mainWindow in z-order
 
 
