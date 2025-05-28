@@ -6,8 +6,8 @@ struct IDCompositionDesktopDevice;
 
 class ThumbnailVisual : public winrt::Windows::UI::Composition::Visual
 {
-
 public:
+	ThumbnailVisual(std::nullptr_t) : Visual{ nullptr } {}
 	ThumbnailVisual(HWND hwnd, HWND target, IDCompositionDesktopDevice* dcompDevice);
 };
 

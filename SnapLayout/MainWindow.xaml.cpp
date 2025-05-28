@@ -78,8 +78,10 @@ namespace winrt::SnapLayout::implementation
 
 				//TODO: This move needs to be corrected with an offset
 				if (self->thumbnailWindow)
-					self->thumbnailWindow->Move(point.x, point.y);
-
+				{
+					auto draggedPointOffset = WindowDragEventListener::GetDraggedWindowPointOffset();
+					self->thumbnailWindow->Move(point.x - draggedPointOffset.x, point.y - draggedPointOffset.y);
+				}
 				for (auto hitTestElement : hitTest)
 				{
 					if (auto button = hitTestElement.try_as<winrt::Microsoft::UI::Xaml::Controls::Button>())
@@ -132,6 +134,8 @@ namespace winrt::SnapLayout::implementation
 					self->thumbnailWindow->Hide();
 					self->thumbnailWindow = nullptr;
 				}
+				if (WindowDragEventListener::HasWindowDragging())
+					ShowWindow(WindowDragEventListener::GetDraggedWindow(), SW_SHOW);
 				break;
 			}
 

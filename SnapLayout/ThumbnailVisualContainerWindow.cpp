@@ -6,6 +6,7 @@
 #include <winrt/Windows.Graphics.Capture.h>
 #include <windows.ui.composition.interop.h>
 #include "DebugHelper.hpp"
+#include <dwmapi.h>
 
 ThumbnailVisualContainerWindow::ThumbnailVisualContainerWindow() : BaseWindow{
 		L"ThumbnailVisualContainer",
@@ -40,43 +41,63 @@ ThumbnailVisualContainerWindow::ThumbnailVisualContainerWindow() : BaseWindow{
 		compositor,
 		canvasDevice
 	);
-	surface = compositionGraphicsDevice.CreateDrawingSurface(
-		{ 1000, 640 },
-		winrt::Windows::Graphics::DirectX::DirectXPixelFormat::B8G8R8A8UIntNormalized,
-		winrt::Windows::Graphics::DirectX::DirectXAlphaMode::Premultiplied
-	);
+
 }
 
 void ThumbnailVisualContainerWindow::SetVisual(HWND sourceHwnd, winrt::Windows::Foundation::Numerics::float2 animationCenter)
 {
 	Show();
-	
-	if (currentVisualHwnd != sourceHwnd)
-	{
-		FreezableThumbnailVisual visual{ sourceHwnd, m_hwnd.get(), compositor, surface, canvasDevice };
-		auto animation = compositor.CreateVector3KeyFrameAnimation();
-		animation.InsertKeyFrame(1.f, { 0.2f, 0.2f, 1.f });
-		animation.Duration(std::chrono::seconds{ 5 });
-		auto const clientRect = ClientRect();
-		//visual.CenterPoint({ static_cast<float>(animationCenter.x) / (clientRect.right - clientRect.left), static_cast<float>(animationCenter.y) / (clientRect.bottom - clientRect.top), 0.f });
-		visual.CenterPoint({ animationCenter, 0.f });
-		visual.StartAnimation(L"Scale", animation);
-		auto children = root.Children();
-		children.RemoveAll();
-		children.InsertAtTop(visual);
-		currentVisualHwnd = sourceHwnd;
-	}
+
+	currentVisualHwnd = sourceHwnd;
 	RECT windowPosition;
-	winrt::check_bool(GetWindowRect(sourceHwnd, &windowPosition));
-	DebugLog("X:{}, y:{}\n", windowPosition.left, windowPosition.top);
+	winrt::check_bool(GetWindowRect(currentVisualHwnd, &windowPosition));
+
 	winrt::check_bool(SetWindowPos(
-		m_hwnd.get(), 
-		nullptr, 
-		windowPosition.left, 
-		windowPosition.top, 
-		windowPosition.right - windowPosition.left, 
-		windowPosition.bottom - windowPosition.top, 
-		SWP_NOZORDER | SWP_NOACTIVATE)
+		m_hwnd.get(),
+		NULL,
+		9999,
+		9999,
+		windowPosition.right - windowPosition.left,
+		windowPosition.bottom - windowPosition.top,
+		SWP_NOACTIVATE)
+	);
+
+	surface = compositionGraphicsDevice.CreateDrawingSurface(
+		{ 
+			static_cast<float>(windowPosition.right - windowPosition.left),
+			static_cast<float>(windowPosition.bottom - windowPosition.top)
+		},
+		winrt::Windows::Graphics::DirectX::DirectXPixelFormat::B8G8R8A8UIntNormalized,
+		winrt::Windows::Graphics::DirectX::DirectXAlphaMode::Premultiplied
+	);
+
+	visual.emplace(sourceHwnd, m_hwnd.get(), compositor, surface, canvasDevice, root.Children());
+	auto const clientRect = ClientRect();
+	visual->CenterPoint({ animationCenter, 0.f });
+
+
+
+}
+
+void ThumbnailVisualContainerWindow::StartAnimation()
+{
+	Show();
+	visual->Scale({ 1.f, 1.f, 1.f });
+	auto animation = compositor.CreateVector3KeyFrameAnimation();
+	animation.InsertKeyFrame(1.f, { 0.2f, 0.2f, 1.f });
+	animation.Duration(std::chrono::milliseconds{500});
+	visual->StartAnimation(L"Scale", animation);
+
+	RECT windowPosition;
+	winrt::check_bool(GetWindowRect(currentVisualHwnd, &windowPosition));
+	winrt::check_bool(SetWindowPos(
+		m_hwnd.get(),
+		HWND_TOP,
+		windowPosition.left,
+		windowPosition.top,
+		windowPosition.right - windowPosition.left,
+		windowPosition.bottom - windowPosition.top,
+		SWP_NOACTIVATE)
 	);
 }
 
@@ -89,14 +110,14 @@ ThumbnailVisualContainerWindow& ThumbnailVisualContainerWindow::Instance()
 void ThumbnailVisualContainerWindow::Hide()
 {
 	ShowWindow(m_hwnd.get(), SW_HIDE);
-	currentVisualHwnd = {};
+	//currentVisualHwnd = {};
 }
 
 void ThumbnailVisualContainerWindow::Move(int x, int y)
 {
 	winrt::check_bool(SetWindowPos(
 		m_hwnd.get(),
-		nullptr,
+		HWND_TOP,
 		x,
 		y,
 		0,

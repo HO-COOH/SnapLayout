@@ -9,6 +9,7 @@ class WindowDragEventListener
 	RECT g_rcInitial;
 	RECT g_beforeHide;
 	HWND g_hwndTracked;
+	POINT g_draggedWindowCursorPoint;
 
 	static VOID CALLBACK WinEventProc(HWINEVENTHOOK hWinEventHook, DWORD event, HWND hwnd,
 		LONG idObject, LONG idChild, DWORD dwEventThread,
@@ -24,6 +25,7 @@ public:
 	static void Unset();
 	static HWND GetDraggedWindow();
 	static bool HasWindowDragging();
+	static POINT GetDraggedWindowPointOffset();
 
 	//We cannot use ShowWindow(..., SW_HIIDE) to hide because that will make window thumbnail stop working.
 	//We can instead just move the dragged window to an offscreen position

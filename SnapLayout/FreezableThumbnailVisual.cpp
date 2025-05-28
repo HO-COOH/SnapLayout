@@ -2,20 +2,22 @@
 #include "FreezableThumbnailVisual.h"
 #include "Interop.hpp"
 #include <winrt/Microsoft.Graphics.Canvas.h>
-
+#include <DpiUtils.hpp>
 FreezableThumbnailVisual::FreezableThumbnailVisual(
 	HWND hwnd, 
 	HWND target, 
 	winrt::Windows::UI::Composition::Compositor const& compositor,
 	winrt::Windows::UI::Composition::CompositionDrawingSurface const& surface,
-	winrt::Microsoft::Graphics::Canvas::CanvasDevice const& canvasDevice)
-	: ThumbnailVisual{ hwnd, target, compositor.as<IDCompositionDesktopDevice>().get() }
+	winrt::Microsoft::Graphics::Canvas::CanvasDevice const& canvasDevice,
+	winrt::Windows::UI::Composition::VisualCollection const& parentVisualCollection)
+	: ThumbnailVisual{ hwnd, target, compositor.as<IDCompositionDesktopDevice>().get() },
+	parentVisualCollection{parentVisualCollection}
 {
 	auto captureItem = winrt::Windows::Graphics::Capture::GraphicsCaptureItem::CreateFromVisual(*this);
 	framePool = winrt::Windows::Graphics::Capture::Direct3D11CaptureFramePool::Create(
 		canvasDevice,
 		winrt::Windows::Graphics::DirectX::DirectXPixelFormat::B8G8R8A8UIntNormalized,
-		1,
+		2,
 		captureItem.Size()
 	);
 
@@ -33,14 +35,23 @@ FreezableThumbnailVisual::FreezableThumbnailVisual(
 				session.Clear(winrt::Windows::UI::Colors::Transparent());
 				session.DrawImage(canvasBitmap);
 			}
+			auto const dpi = GetDpiForWindow(hwnd);
 			auto spriteVisual = compositor.CreateSpriteVisual();
 			auto const size = frame.ContentSize();
 			spriteVisual.Size({ static_cast<float>(size.Width), static_cast<float>(size.Height) });
+			//spriteVisual.Size({ UnscaleForDpi(size.Width, dpi), UnscaleForDpi(size.Height, dpi)});
 			spriteVisual.Brush(compositor.CreateSurfaceBrush(surface));
+			this->StopAnimation(L"Scale");
+			spriteVisual.CenterPoint(centerPoint);
+			this->parentVisualCollection.RemoveAll();
+			this->parentVisualCollection.InsertAtTop(spriteVisual);
 			static_cast<winrt::Windows::UI::Composition::Visual&>(*this) = spriteVisual;
-
 			session.Close();
 			framePool.Close();
-			ShowWindow(hwnd, SW_HIDE);
 		});
+}
+
+void FreezableThumbnailVisual::CenterPoint(winrt::Windows::Foundation::Numerics::float3 value)
+{
+	centerPoint = value;
 }
