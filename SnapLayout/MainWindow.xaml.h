@@ -28,7 +28,6 @@ namespace winrt::SnapLayout::implementation
             winrt::Microsoft::UI::Xaml::Controls::Grid const& parentGrid
         );
 
-        //std::unordered_map<winrt::Microsoft::UI::Xaml::Controls::Button, decltype(&LayoutWindowByButton)> layoutFunctions;
         winrt::Microsoft::UI::Xaml::Controls::Button m_previousButton{ nullptr };
 
         void OnShow(HMONITOR draggedWindowMonitor);

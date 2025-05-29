@@ -37,7 +37,6 @@ namespace winrt::SnapLayout::implementation
 
 		
 		m_appWindow = AppWindow();
-		
 		m_appWindow.Presenter().as<winrt::Microsoft::UI::Windowing::OverlappedPresenter>().IsAlwaysOnTop(true);
 		m_appWindow.IsShownInSwitchers(false);
 
@@ -69,10 +68,8 @@ namespace winrt::SnapLayout::implementation
 				POINT point{ GET_X_LPARAM(lparam), GET_Y_LPARAM(lparam) };
 				POINT clientPoint = point;
 				ScreenToClient(g_instance, &clientPoint);
-				float const xPos = UnscaleForDpi(clientPoint.x, dpi);
-				float const yPos = UnscaleForDpi(clientPoint.y, dpi);
 				auto hitTest = winrt::Microsoft::UI::Xaml::Media::VisualTreeHelper::FindElementsInHostCoordinates(
-					{ xPos, yPos },
+					UnscalePointForDpi<>(clientPoint, dpi),
 					self->RootGrid()
 				);
 
@@ -88,7 +85,10 @@ namespace winrt::SnapLayout::implementation
 					{
 						//put button to hover state, show window thumbnail visual
 
-
+						if (!self->m_previousButton)
+						{
+							WindowDragEventListener::HideDraggedWindow(point, dpi);
+						}
 
 						if (button == self->m_previousButton)
 						{
@@ -107,7 +107,7 @@ namespace winrt::SnapLayout::implementation
 								draggedWindow
 							);
 							self->thumbnailWindow = &ThumbnailVisualContainerWindow::Instance();
-							WindowDragEventListener::HideDraggedWindow(point, dpi);
+
 						}
 
 						break;
@@ -128,14 +128,12 @@ namespace winrt::SnapLayout::implementation
 				}
 				winrt::get_self<winrt::SnapLayout::implementation::AcrylicVisualWindow>(winrt::SnapLayout::implementation::AcrylicVisualWindow::Instance)->Hide();
 				//ThumbnailVisualContainerWindow::Instance().Hide();
-				winrt::SnapLayout::implementation::AcrylicVisualWindow::Instance.AppWindow().Hide();
 				if (self->thumbnailWindow)
 				{
 					self->thumbnailWindow->Hide();
 					self->thumbnailWindow = nullptr;
 				}
-				if (WindowDragEventListener::HasWindowDragging())
-					ShowWindow(WindowDragEventListener::GetDraggedWindow(), SW_SHOW);
+
 				break;
 			}
 

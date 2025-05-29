@@ -74,19 +74,27 @@ void ThumbnailVisualContainerWindow::SetVisual(HWND sourceHwnd, winrt::Windows::
 	visual.emplace(sourceHwnd, m_hwnd.get(), compositor, surface, canvasDevice, root.Children());
 	auto const clientRect = ClientRect();
 	visual->CenterPoint({ animationCenter, 0.f });
+}
 
-
-
+void ThumbnailVisualContainerWindow::SetVisual(HWND sourceHwnd, POINT animationCenter)
+{
+	SetVisual(sourceHwnd, winrt::Windows::Foundation::Numerics::float2{
+		static_cast<float>(animationCenter.x),
+		static_cast<float>(animationCenter.y)
+	});
 }
 
 void ThumbnailVisualContainerWindow::StartAnimation()
 {
 	Show();
 	visual->Scale({ 1.f, 1.f, 1.f });
-	auto animation = compositor.CreateVector3KeyFrameAnimation();
-	animation.InsertKeyFrame(1.f, { 0.2f, 0.2f, 1.f });
-	animation.Duration(std::chrono::milliseconds{500});
-	visual->StartAnimation(L"Scale", animation);
+	if (!shrinkAnimation)
+	{
+		shrinkAnimation = compositor.CreateVector3KeyFrameAnimation();
+		shrinkAnimation.InsertKeyFrame(1.f, { 0.2f, 0.2f, 1.f });
+		shrinkAnimation.Duration(duration);
+	}
+	visual->StartAnimation(L"Scale", shrinkAnimation);
 
 	RECT windowPosition;
 	winrt::check_bool(GetWindowRect(currentVisualHwnd, &windowPosition));
@@ -109,8 +117,22 @@ ThumbnailVisualContainerWindow& ThumbnailVisualContainerWindow::Instance()
 
 void ThumbnailVisualContainerWindow::Hide()
 {
-	ShowWindow(m_hwnd.get(), SW_HIDE);
-	//currentVisualHwnd = {};
+	if (!visual)
+		return;
+
+	if (!restoreAnimation)
+	{
+		restoreAnimation = compositor.CreateVector3KeyFrameAnimation();
+		restoreAnimation.InsertKeyFrame(1.f, { 1.f, 1.f, 1.f });
+		restoreAnimation.Duration(duration);
+	}
+	auto scopedBatch = compositor.CreateScopedBatch(winrt::Windows::UI::Composition::CompositionBatchTypes::Animation);
+	scopedBatch.Completed([this](auto&&...) { 
+		ShowWindow(currentVisualHwnd, SW_SHOW);
+		ShowWindow(m_hwnd.get(), SW_HIDE); 
+	});
+	visual->StartAnimation(L"Scale", restoreAnimation);
+	scopedBatch.End();
 }
 
 void ThumbnailVisualContainerWindow::Move(int x, int y)

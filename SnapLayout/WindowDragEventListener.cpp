@@ -8,9 +8,9 @@
 #include "DebugHelper.hpp"
 #include <optional>
 #include "DpiUtils.hpp"
+#include "MouseHookDll.h"
 
 static std::optional<WindowDragEventListener> g_eventListener;
-extern bool HasLButtonDown;
 
 static bool isWindowResizable(HWND hwnd)
 {
@@ -35,13 +35,12 @@ VOID WindowDragEventListener::WinEventProc(HWINEVENTHOOK hWinEventHook, DWORD ev
 void WindowDragEventListener::onMoveSizeStart(DWORD event, HWND hwnd, LONG idObject, LONG idChild, DWORD dwEventThread, DWORD dwmsEventTime)
 {
     //Non-resizable window should not trigger snap layout
-    if (!isWindowResizable(hwnd) || !HasLButtonDown)
+    if (!isWindowResizable(hwnd) || !MouseHookDll::HasLButtonDown())
         return;
 
     DWORD pid;
     GetWindowThreadProcessId(hwnd, &pid);
-	static DWORD const pidCurrent = GetCurrentProcessId();
-    if (pid == pidCurrent)
+    if (static DWORD const pidCurrent = GetCurrentProcessId(); pid == pidCurrent)
         return;
 
     winrt::check_bool(GetCursorPos(&g_eventListener->g_draggedWindowCursorPoint));
@@ -51,8 +50,7 @@ void WindowDragEventListener::onMoveSizeStart(DWORD event, HWND hwnd, LONG idObj
     winrt::SnapLayout::implementation::MainWindow::GetInstance()->OnShow(MonitorFromWindow(hwnd, MONITOR_DEFAULTTONEAREST));
     DebugLog("Move/Resize started on window");
 
-    auto const dpi = 96;
-    ThumbnailVisualContainerWindow::Instance().SetVisual(g_eventListener->g_hwndTracked, { UnscaleForDpi(g_eventListener->g_draggedWindowCursorPoint.x, dpi), UnscaleForDpi(g_eventListener->g_draggedWindowCursorPoint.y, dpi) });
+    ThumbnailVisualContainerWindow::Instance().SetVisual(g_eventListener->g_hwndTracked, g_eventListener->g_draggedWindowCursorPoint);
 }
 
 void WindowDragEventListener::onMoveSizeEnd(DWORD event, HWND hwnd, LONG idObject, LONG idChild, DWORD dwEventThread, DWORD dwmsEventTime)

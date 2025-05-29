@@ -6,13 +6,15 @@
 class MouseHookDll
 {
 	wil::unique_hmodule lib{ LoadLibrary(L"../../MouseHook.dll") };
+	bool hasLButtonDown{};
 	
 	using InstallHookFunc = void(*)(HWND, bool*);
 	using UnsetHookFunc = void(*)();
 
 	InstallHookFunc installHook = reinterpret_cast<InstallHookFunc>(GetProcAddress(lib.get(), "InstallHook"));
 public:
-	static void Set(HWND targetMessageHwnd, bool& hasLButtonDown);
+	static void Set(HWND targetMessageHwnd);
 	static void Unset();
+	static bool HasLButtonDown();
 };
 

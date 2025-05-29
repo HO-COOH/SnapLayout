@@ -8,7 +8,7 @@
 #include "MouseHookDll.h"
 #include "Interop.hpp"
 
-bool HasLButtonDown = false;
+
 // To learn more about WinUI, the WinUI project structure,
 // and more about our project templates, see: http://aka.ms/winui-project-info.
  
@@ -48,17 +48,7 @@ namespace winrt::SnapLayout::implementation
     {
         window = make<MainWindow>();
         winrt::SnapLayout::AcrylicVisualWindow{};
-
-        MouseHookDll::Set(MainWindow::g_instance, HasLButtonDown);
-        //CoreDispatcher internally creates a DispatcherQueue if it doesn't exist (and if you are on 15063 or newer)
-        auto dispatcher = winrt::try_get_activation_factory<winrt::Windows::UI::Core::CoreDispatcher, IInternalCoreDispatcherStatic>();
-
-        //On 10586 there isn't a way to create a CoreDispatcher (unless you create a CoreWindow, lol.)
-
-        winrt::Windows::UI::Core::CoreDispatcher coreDispatcher{ nullptr };
-        dispatcher->GetOrCreateForCurrentThread(&coreDispatcher);
-
-        //window->SetVisual(FindWindow(L"Shell_TrayWnd", NULL));
+        MouseHookDll::Set(MainWindow::g_instance);
         WindowDragEventListener::Set();
 
         //TODO: Debug only
