@@ -1,0 +1,11 @@
+namespace SnapLayout
+{
+    [bindable]
+    [default_interface]
+    runtimeclass WindowModel 
+    {
+        WindowModel(UInt64 handle);
+        UInt64 Handle{ get; };
+        String Title{ get; };
+    }
+}

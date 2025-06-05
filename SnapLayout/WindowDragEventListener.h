@@ -1,5 +1,6 @@
 #pragma once
 #include <wil/resource.h>
+#include "INotifyWindowEvent.hpp"
 
 class WindowDragEventListener
 {
@@ -10,6 +11,7 @@ class WindowDragEventListener
 	RECT g_beforeHide;
 	HWND g_hwndTracked;
 	POINT g_draggedWindowCursorPoint;
+	INotifyWindowEvent* g_notifyWindowEvent{ nullptr };
 
 	static VOID CALLBACK WinEventProc(HWINEVENTHOOK hWinEventHook, DWORD event, HWND hwnd,
 		LONG idObject, LONG idChild, DWORD dwEventThread,
@@ -23,6 +25,8 @@ public:
 	WindowDragEventListener(private_ctor_t, HWINEVENTHOOK hook);
 	static void Set();
 	static void Unset();
+	static void SubscribeWindowEvent(INotifyWindowEvent* handler);
+	static void UnsubscribeWindowEvent(INotifyWindowEvent* handler);
 	static HWND GetDraggedWindow();
 	static bool HasWindowDragging();
 	static POINT GetDraggedWindowPointOffset();

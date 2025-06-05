@@ -1,0 +1,12 @@
+import "WindowModel.idl";
+
+namespace SnapLayout
+{
+    [default_interface]
+    runtimeclass OverviewWindow : WinUI3Package.TransparentWindow
+    {
+        OverviewWindow();
+
+        Windows.Foundation.Collections.IObservableVector<WindowModel> Windows{ get; };
+    }
+}

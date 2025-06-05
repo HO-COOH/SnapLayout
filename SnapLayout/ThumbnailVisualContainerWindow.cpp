@@ -10,8 +10,11 @@
 
 ThumbnailVisualContainerWindow::ThumbnailVisualContainerWindow() : BaseWindow{
 		L"ThumbnailVisualContainer",
-		//TODO: add WS_EX_TOOLWINDOW when in release
+#if defined(_DEBUG) || defined(DEBUG) // in debug let the window show on taskbar
 		WS_EX_OVERLAPPEDWINDOW | WS_EX_NOREDIRECTIONBITMAP | WS_EX_TOPMOST/* | WS_EX_TOOLWINDOW*/,
+#else
+		WS_EX_OVERLAPPEDWINDOW | WS_EX_NOREDIRECTIONBITMAP | WS_EX_TOPMOST | WS_EX_TOOLWINDOW
+#endif
 		WS_POPUPWINDOW,
 		CW_USEDEFAULT,
 		CW_USEDEFAULT,
@@ -19,6 +22,7 @@ ThumbnailVisualContainerWindow::ThumbnailVisualContainerWindow() : BaseWindow{
 		640
 	}
 {
+	ShowWindow(m_hwnd.get(), SW_HIDE);
 	DirectXFactory::Init();
 	auto interopCompositorFactory = winrt::get_activation_factory<winrt::Windows::UI::Composition::Compositor, IInteropCompositorFactoryPartner>();
 	winrt::com_ptr<IInteropCompositorPartner> interopCompositor;
@@ -72,7 +76,6 @@ void ThumbnailVisualContainerWindow::SetVisual(HWND sourceHwnd, winrt::Windows::
 	);
 
 	visual.emplace(sourceHwnd, m_hwnd.get(), compositor, surface, canvasDevice, root.Children());
-	auto const clientRect = ClientRect();
 	visual->CenterPoint({ animationCenter, 0.f });
 }
 
@@ -87,7 +90,7 @@ void ThumbnailVisualContainerWindow::SetVisual(HWND sourceHwnd, POINT animationC
 void ThumbnailVisualContainerWindow::StartAnimation()
 {
 	Show();
-	visual->Scale({ 1.f, 1.f, 1.f });
+	visual->Scale(winrt::Windows::Foundation::Numerics::float3::one());
 	if (!shrinkAnimation)
 	{
 		shrinkAnimation = compositor.CreateVector3KeyFrameAnimation();
@@ -123,7 +126,7 @@ void ThumbnailVisualContainerWindow::Hide()
 	if (!restoreAnimation)
 	{
 		restoreAnimation = compositor.CreateVector3KeyFrameAnimation();
-		restoreAnimation.InsertKeyFrame(1.f, { 1.f, 1.f, 1.f });
+		restoreAnimation.InsertKeyFrame(1.f, winrt::Windows::Foundation::Numerics::float3::one());
 		restoreAnimation.Duration(duration);
 	}
 	auto scopedBatch = compositor.CreateScopedBatch(winrt::Windows::UI::Composition::CompositionBatchTypes::Animation);

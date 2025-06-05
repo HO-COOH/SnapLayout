@@ -26,7 +26,7 @@ namespace winrt::SnapLayout::implementation
          *  and getting the starting position of the animation
          * @param dpi The dpi of the monitor of the dragged window
          */
-        void SetVisualPosition(LayoutResult position, HWND draggedWindow, UINT dpi);
+        void SetVisualPosition(LayoutResult position, HWND draggedWindow, UINT dpi, RECT rcWork);
         static winrt::Microsoft::UI::Composition::SystemBackdrops::SystemBackdropConfiguration m_configuration;
 
         void Hide();

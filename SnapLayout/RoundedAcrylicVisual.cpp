@@ -6,13 +6,13 @@ RoundedAcrylicVisual::RoundedAcrylicVisual(winrt::Microsoft::UI::Composition::Vi
 	m_compositor{ compositor },
 	m_clip{ compositor.CreateRectangleClip(
 		0,
-			0,
-			10.f,
-			10.f,
-			{ CornerRadius, CornerRadius },
-			{ CornerRadius, CornerRadius },
-			{ CornerRadius, CornerRadius },
-			{ CornerRadius, CornerRadius }
+		0,
+		10.f,
+		10.f,
+		{ CornerRadius, CornerRadius },
+		{ CornerRadius, CornerRadius },
+		{ CornerRadius, CornerRadius },
+		{ CornerRadius, CornerRadius }
 	) }
 {
 	m_placementVisual.Clip(m_clip);

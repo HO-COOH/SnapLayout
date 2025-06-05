@@ -128,3 +128,13 @@ void WindowDragEventListener::HideDraggedWindow(POINT cursorPoint, UINT dpi)
     DebugLog(L"Window moved offscreen\n");
 }
 
+void WindowDragEventListener::SubscribeWindowEvent(INotifyWindowEvent* handler)
+{
+    g_eventListener->g_notifyWindowEvent = handler;
+}
+
+void WindowDragEventListener::UnsubscribeWindowEvent(INotifyWindowEvent* handler)
+{
+    assert(g_eventListener->g_notifyWindowEvent == handler);
+    g_eventListener->g_notifyWindowEvent = nullptr;
+}

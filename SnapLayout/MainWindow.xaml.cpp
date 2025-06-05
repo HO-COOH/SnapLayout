@@ -101,8 +101,7 @@ namespace winrt::SnapLayout::implementation
 								winrt::Microsoft::UI::Xaml::VisualStateManager::GoToState(self->m_previousButton, L"Normal", true);
 							winrt::Microsoft::UI::Xaml::VisualStateManager::GoToState(button, L"PointerOver", true);
 							self->m_previousButton = button;
-							self->m_previousButtonWindowPlacement = LayoutImpl(GetButtonLayoutResult(button,
-								button.Parent().as<winrt::Microsoft::UI::Xaml::Controls::Grid>()),
+							self->m_previousButtonWindowPlacement = LayoutImpl(GetButtonLayoutResult(button),
 								MonitorFromWindow(g_instance, MONITOR_DEFAULTTONEAREST),
 								draggedWindow
 							);
@@ -159,16 +158,27 @@ namespace winrt::SnapLayout::implementation
 						self->m_previousButtonWindowPlacement.height,
 						0
 					));
+
+					for (auto parentGridChild : self->m_previousButton.Parent().as<winrt::Microsoft::UI::Xaml::Controls::Grid>().Children())
+					{
+						if (auto button = parentGridChild.as<winrt::Microsoft::UI::Xaml::Controls::Button>(); button != self->m_previousButton)
+						{
+							LayoutResult overviewWindowPlacement = GetButtonLayoutResult(button);
+							ConvertLayoutToMonitorWindowPlacement(overviewWindowPlacement, MonitorFromWindow(g_instance, MONITOR_DEFAULTTONEAREST));
+							self->m_overviewWindowImpl->Show(overviewWindowPlacement);
+							break;
+						}
+					}
 				}
-				self->OnDismiss();
 				break;
 			}
 		}
 		return DefSubclassProc(hwnd, msg, wparam, lparam);
 	}
 
-	LayoutResult MainWindow::GetButtonLayoutResult(winrt::Microsoft::UI::Xaml::Controls::Button const& button, winrt::Microsoft::UI::Xaml::Controls::Grid const& parentGrid)
+	LayoutResult MainWindow::GetButtonLayoutResult(winrt::Microsoft::UI::Xaml::Controls::Button const& button)
 	{
+		auto parentGrid = button.Parent().as<winrt::Microsoft::UI::Xaml::Controls::Grid>();
 		/*Instead of calculating rowTotal, buttonRow in two pass, we can hand write one for loop, better performance*/
 
 		auto const buttonRow = winrt::Microsoft::UI::Xaml::Controls::Grid::GetRow(button);

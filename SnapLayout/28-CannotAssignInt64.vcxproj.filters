@@ -10,9 +10,15 @@
     <Page Include="MainWindow.xaml">
       <Filter>Window</Filter>
     </Page>
+    <Page Include="OverviewWindow.xaml">
+      <Filter>Window\OverviewWindow</Filter>
+    </Page>
   </ItemGroup>
   <ItemGroup>
     <Midl Include="MainWindow.idl" />
+    <Midl Include="WindowModel.idl">
+      <Filter>Window\OverviewWindow</Filter>
+    </Midl>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="pch.cpp" />
@@ -43,11 +49,13 @@
     <ClCompile Include="MouseHookDll.cpp">
       <Filter>PrivateApi</Filter>
     </ClCompile>
+    <ClCompile Include="LayoutResult.cpp">
+      <Filter>Utils</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="pch.h" />
     <ClInclude Include="DirectXFactory.h" />
-    <ClInclude Include="LayoutResult.h" />
     <ClInclude Include="LayoutFunctions.h" />
     <ClInclude Include="DwmPrivateApi.h">
       <Filter>PrivateApi</Filter>
@@ -88,6 +96,12 @@
     <ClInclude Include="MouseHookDll.h">
       <Filter>PrivateApi</Filter>
     </ClInclude>
+    <ClInclude Include="INotifyWindowEvent.hpp">
+      <Filter>Utils</Filter>
+    </ClInclude>
+    <ClInclude Include="LayoutResult.h">
+      <Filter>Utils</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <Image Include="Assets\Wide310x150Logo.scale-200.png">
@@ -127,6 +141,9 @@
     </Filter>
     <Filter Include="Visual">
       <UniqueIdentifier>{107cbbe8-b6a0-495c-a964-004b513a77a5}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Window\OverviewWindow">
+      <UniqueIdentifier>{5b400b4b-509f-48e0-9f69-e721d8c83988}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
   <ItemGroup>

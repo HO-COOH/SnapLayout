@@ -1,6 +1,7 @@
 #pragma once
 
 #include "MainWindow.g.h"
+#include "OverviewWindow.xaml.h"
 #include "LayoutResult.h"
 
 class ThumbnailVisualContainerWindow;
@@ -24,8 +25,7 @@ namespace winrt::SnapLayout::implementation
         );
 
         static LayoutResult GetButtonLayoutResult(
-            winrt::Microsoft::UI::Xaml::Controls::Button const& button,
-            winrt::Microsoft::UI::Xaml::Controls::Grid const& parentGrid
+            winrt::Microsoft::UI::Xaml::Controls::Button const& button
         );
 
         winrt::Microsoft::UI::Xaml::Controls::Button m_previousButton{ nullptr };
@@ -44,6 +44,8 @@ namespace winrt::SnapLayout::implementation
     private:
         void moveToMonitor(HMONITOR monitor);
         ThumbnailVisualContainerWindow* thumbnailWindow{ nullptr };
+        winrt::SnapLayout::OverviewWindow m_overviewWindow;
+        OverviewWindow* m_overviewWindowImpl = winrt::get_self<implementation::OverviewWindow>(m_overviewWindow);
         winrt::Microsoft::UI::Windowing::AppWindow m_appWindow{ nullptr };
         bool m_hasExitCompleted = true;
         bool m_shouldHideWindow = true;
