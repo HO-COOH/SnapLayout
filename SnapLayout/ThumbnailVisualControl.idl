@@ -1,0 +1,10 @@
+namespace SnapLayout
+{
+    [bindable]
+    [default_interface]
+    runtimeclass ThumbnailVisualControl : Microsoft.UI.Xaml.Controls.Control
+    {
+        ThumbnailVisualControl();
+        UInt64 Handle;
+    }
+}

@@ -19,6 +19,9 @@
     <Midl Include="WindowModel.idl">
       <Filter>Window\OverviewWindow</Filter>
     </Midl>
+    <Midl Include="ThumbnailVisualControl.idl">
+      <Filter>Window\OverviewWindow</Filter>
+    </Midl>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="pch.cpp" />
@@ -51,6 +54,12 @@
     </ClCompile>
     <ClCompile Include="LayoutResult.cpp">
       <Filter>Utils</Filter>
+    </ClCompile>
+    <ClCompile Include="MonitorWrapper.cpp">
+      <Filter>Utils</Filter>
+    </ClCompile>
+    <ClCompile Include="OverviewWindowFilter.cpp">
+      <Filter>Window\OverviewWindow</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -101,6 +110,12 @@
     </ClInclude>
     <ClInclude Include="LayoutResult.h">
       <Filter>Utils</Filter>
+    </ClInclude>
+    <ClInclude Include="MonitorWrapper.h">
+      <Filter>Utils</Filter>
+    </ClInclude>
+    <ClInclude Include="OverviewWindowFilter.h">
+      <Filter>Window\OverviewWindow</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

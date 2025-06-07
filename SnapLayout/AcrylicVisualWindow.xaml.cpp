@@ -9,6 +9,7 @@
 #include "DpiUtils.hpp"
 #include "WindowUtils.hpp"
 #include <winrt/Microsoft.UI.Windowing.h>
+#include "OverviewWindowFilter.h"
 
 // To learn more about WinUI, the WinUI project structure,
 // and more about our project templates, see: http://aka.ms/winui-project-info.
@@ -30,6 +31,7 @@ namespace winrt::SnapLayout::implementation
 		Instance = *this;
 		AppWindow().IsShownInSwitchers(false);
 		m_hwnd = GetHwnd(*this);
+		AddToFilter(m_hwnd);
 	}
 
 	void AcrylicVisualWindow::RootGrid_Loaded(

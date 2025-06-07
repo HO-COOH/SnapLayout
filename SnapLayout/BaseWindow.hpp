@@ -1,6 +1,7 @@
 #pragma once
 #include <wil/resource.h>
 #include <string_view>
+#include "OverviewWindowFilter.h"
 
 template<size_t N>
 struct StringLiteral {
@@ -92,6 +93,7 @@ public:
 			nullptr,
 			static_cast<T*>(this)
 		);
+		AddToFilter(hwnd);
 		SetWindowLongPtr(hwnd, GWLP_USERDATA, reinterpret_cast<LONG_PTR>(static_cast<T*>(this)));
 
 		ShowWindow(hwnd, SW_SHOW);

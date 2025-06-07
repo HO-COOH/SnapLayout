@@ -18,6 +18,8 @@ namespace winrt::SnapLayout::implementation
 
 	winrt::hstring WindowModel::Title()
 	{
-		return L"";
+		wchar_t title[MAX_PATH]{};
+		GetWindowText(m_hwnd, title, MAX_PATH);
+		return winrt::hstring{ title };
 	}
 }

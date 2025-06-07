@@ -9,13 +9,9 @@
 #include <optional>
 #include "DpiUtils.hpp"
 #include "MouseHookDll.h"
+#include "WindowUtils.hpp"
 
 static std::optional<WindowDragEventListener> g_eventListener;
-
-static bool isWindowResizable(HWND hwnd)
-{
-	return GetWindowLongPtr(hwnd, GWL_STYLE) & WS_THICKFRAME;
-}
 
 VOID WindowDragEventListener::WinEventProc(HWINEVENTHOOK hWinEventHook, DWORD event, HWND hwnd, LONG idObject, LONG idChild, DWORD dwEventThread, DWORD dwmsEventTime)
 {
@@ -35,7 +31,7 @@ VOID WindowDragEventListener::WinEventProc(HWINEVENTHOOK hWinEventHook, DWORD ev
 void WindowDragEventListener::onMoveSizeStart(DWORD event, HWND hwnd, LONG idObject, LONG idChild, DWORD dwEventThread, DWORD dwmsEventTime)
 {
     //Non-resizable window should not trigger snap layout
-    if (!isWindowResizable(hwnd) || !MouseHookDll::HasLButtonDown())
+    if (!IsWindowResizable(hwnd) || !MouseHookDll::HasLButtonDown())
         return;
 
     DWORD pid;
@@ -72,16 +68,22 @@ void WindowDragEventListener::onObjectCreate(DWORD event, HWND hwnd, LONG idObje
 {
     if (IsWindow(hwnd))
     {
-        wchar_t title[256];
-        auto count = GetWindowText(hwnd, title, std::size(title));
-        title[count] = L'\0 ';
-        //DebugLog(L"Window created: {}\n", title);
+        //TODO: remove on release
+        wchar_t title[MAX_PATH]{};
+        GetWindowText(hwnd, title, MAX_PATH);
+        DebugLog(L"{}\n", title);
+        if (g_eventListener->g_notifyWindowEvent && IsWindowResizable(hwnd))
+        {
+            g_eventListener->g_notifyWindowEvent->OnWindowCreated(hwnd);
+        }
     }
 }
 
 void WindowDragEventListener::onObjectDestroy(DWORD event, HWND hwnd, LONG idObject, LONG idChild, DWORD dwEventThread, DWORD dwmsEventTime)
 {
     //DebugLog("Window destroyed.\n");
+    if (g_eventListener->g_notifyWindowEvent)
+        g_eventListener->g_notifyWindowEvent->OnWindowDestroyed(hwnd);
 }
 
 WindowDragEventListener::WindowDragEventListener(WindowDragEventListener::private_ctor_t, HWINEVENTHOOK hook) : g_hEventHook{ hook }

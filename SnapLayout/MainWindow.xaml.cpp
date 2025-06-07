@@ -18,6 +18,7 @@
 #include "ThumbnailVisualContainerWindow.h"
 #include "DebugHelper.hpp"
 #include <ShellScalingApi.h>
+#include "OverviewWindowFilter.h"
 #pragma comment(lib, "Dwmapi.lib")
 #pragma comment(lib, "Comctl32.lib")
 
@@ -34,7 +35,7 @@ namespace winrt::SnapLayout::implementation
 	MainWindow::MainWindow()
 	{
 		g_instance = GetHwnd(*this);
-
+		AddToFilter(g_instance);
 		
 		m_appWindow = AppWindow();
 		m_appWindow.Presenter().as<winrt::Microsoft::UI::Windowing::OverlappedPresenter>().IsAlwaysOnTop(true);
@@ -132,7 +133,6 @@ namespace winrt::SnapLayout::implementation
 					self->thumbnailWindow->Hide();
 					self->thumbnailWindow = nullptr;
 				}
-
 				break;
 			}
 
@@ -159,21 +159,28 @@ namespace winrt::SnapLayout::implementation
 						0
 					));
 
-					for (auto parentGridChild : self->m_previousButton.Parent().as<winrt::Microsoft::UI::Xaml::Controls::Grid>().Children())
-					{
-						if (auto button = parentGridChild.as<winrt::Microsoft::UI::Xaml::Controls::Button>(); button != self->m_previousButton)
-						{
-							LayoutResult overviewWindowPlacement = GetButtonLayoutResult(button);
-							ConvertLayoutToMonitorWindowPlacement(overviewWindowPlacement, MonitorFromWindow(g_instance, MONITOR_DEFAULTTONEAREST));
-							self->m_overviewWindowImpl->Show(overviewWindowPlacement);
-							break;
-						}
-					}
+					self->layoutOtherWindows();
 				}
 				break;
 			}
 		}
 		return DefSubclassProc(hwnd, msg, wparam, lparam);
+	}
+
+	winrt::fire_and_forget MainWindow::layoutOtherWindows()
+	{
+		auto previousButtonCopy = m_previousButton;
+		for (auto parentGridChild : previousButtonCopy.Parent().as<winrt::Microsoft::UI::Xaml::Controls::Grid>().Children())
+		{
+			if (auto button = parentGridChild.as<winrt::Microsoft::UI::Xaml::Controls::Button>(); button != previousButtonCopy)
+			{
+				LayoutResult overviewWindowPlacement = GetButtonLayoutResult(button);
+				ConvertLayoutToMonitorWindowPlacement(overviewWindowPlacement, MonitorFromWindow(g_instance, MONITOR_DEFAULTTONEAREST));
+				m_overviewWindowImpl->ShowAndPlaceWindowAsync(overviewWindowPlacement);
+				break;
+			}
+		}
+		co_return;
 	}
 
 	LayoutResult MainWindow::GetButtonLayoutResult(winrt::Microsoft::UI::Xaml::Controls::Button const& button)

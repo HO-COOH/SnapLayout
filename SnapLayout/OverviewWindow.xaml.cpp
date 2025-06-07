@@ -7,15 +7,34 @@
 #include <winrt/Microsoft.UI.Xaml.Hosting.h>
 #include "WindowDragEventListener.h"
 #include "WindowUtils.hpp"
+#include "Interop.hpp"
+#include "DirectXFactory.h"
+#include "OverviewWindowFilter.h"
 
 // To learn more about WinUI, the WinUI project structure,
 // and more about our project templates, see: http://aka.ms/winui-project-info.
 
 namespace winrt::SnapLayout::implementation
 {
+	HWND OverviewWindow::Instance;
+	IDCompositionDesktopDevice* OverviewWindow::dcompDevice;
+
 	OverviewWindow::OverviewWindow()
 	{
 		m_hwnd = GetHwnd(*this);
+
+		Instance = m_hwnd;
+		AddToFilter(m_hwnd);
+
+		auto interopCompositorFactory = winrt::get_activation_factory<winrt::Windows::UI::Composition::Compositor, IInteropCompositorFactoryPartner>();
+		winrt::com_ptr<IInteropCompositorPartner> interopCompositor;
+		winrt::check_hresult(interopCompositorFactory->CreateInteropCompositor(
+			DirectXFactory::d2dDevice.get(),
+			nullptr,
+			IID_PPV_ARGS(interopCompositor.put())));
+
+
+		 dcompDevice = interopCompositor.as<IDCompositionDesktopDevice>().detach();
 	}
 
 	void OverviewWindow::RootGrid_Loaded(
@@ -36,6 +55,13 @@ namespace winrt::SnapLayout::implementation
 		winrt::Microsoft::UI::Xaml::Hosting::ElementCompositionPreview::SetElementChildVisual(element, m_acrylicVisual);
 	}
 
+	void OverviewWindow::SizeChanged(winrt::Windows::Foundation::IInspectable const& sender, winrt::Microsoft::UI::Xaml::RoutedEventArgs const& e)
+	{
+		auto control = sender.as<winrt::SnapLayout::ThumbnailVisualControl>();
+		auto width = control.ActualWidth();
+		control.Parent().as<winrt::Microsoft::UI::Xaml::Controls::Grid>().MaxWidth(width);
+	}
+
 	winrt::Windows::Foundation::Collections::IObservableVector<SnapLayout::WindowModel> OverviewWindow::Windows()
 	{
 		return m_windows;
@@ -43,6 +69,9 @@ namespace winrt::SnapLayout::implementation
 
 	void OverviewWindow::OnWindowCreated(HWND createdWindow)
 	{
+		if (IsInFilter(createdWindow))
+			return;
+
 		SnapLayout::WindowModel model{ reinterpret_cast<uint64_t>(createdWindow) };
 		m_windows.Append(model);
 		m_windowRef[createdWindow] = winrt::make_weak(model);
@@ -59,10 +88,11 @@ namespace winrt::SnapLayout::implementation
 		}
 	}
 
-	void OverviewWindow::Show(LayoutResult layout)
+	void OverviewWindow::ShowAndPlaceWindowAsync(LayoutResult layout)
 	{
+		initWindows();
 		WindowDragEventListener::SubscribeWindowEvent(this);
-		ShowWindow(m_hwnd, SW_SHOWNOACTIVATE);
+		Activate();
 		SetWindowPos(m_hwnd, nullptr, layout.x, layout.y, layout.width, layout.height, SWP_NOZORDER | SWP_NOACTIVATE);
 		m_acrylicVisual.StartSizeAnimation({ 10.f, 10.f }, { layout.width, layout.height });
 	}
@@ -70,5 +100,36 @@ namespace winrt::SnapLayout::implementation
 	void OverviewWindow::Hide()
 	{
 		WindowDragEventListener::UnsubscribeWindowEvent(this);
+		ShowWindow(m_hwnd, SW_HIDE);
+	}
+
+	void OverviewWindow::initWindows()
+	{
+		m_windows.Clear();
+		m_windowRef.clear();
+
+		static DWORD explorerPid = 0;
+		HWND hShellWnd = FindWindow(L"Shell_TrayWnd", nullptr);
+		GetWindowThreadProcessId(hShellWnd, &explorerPid);
+
+		EnumWindows(
+			+[](HWND hwnd, LPARAM lparam) -> BOOL
+			{
+				if (IsWindowResizable(hwnd, true) && !IsInFilter(hwnd))
+				{
+					wchar_t className[MAX_PATH]{};
+					GetClassName(hwnd, className, std::size(className));
+					DWORD pid;
+					GetWindowThreadProcessId(hwnd, &pid);
+
+					if (std::wstring_view{ className } == L"ApplicationFrameWindow" && pid == explorerPid)
+						return true;
+
+					reinterpret_cast<OverviewWindow*>(lparam)->OnWindowCreated(hwnd);
+				}
+				return true;
+			},
+			reinterpret_cast<LPARAM>(this)
+		);
 	}
 }

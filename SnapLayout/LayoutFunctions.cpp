@@ -22,7 +22,8 @@ LayoutResult LayoutImpl(LayoutResult layoutResult, HMONITOR monitor, HWND dragge
 	ConvertLayoutToMonitorWindowPlacement(layoutResult, rcWork);
 	ConvertLayoutToMonitorWindowPlacement(windowPlacement, rcWork);
 
-	layoutResult.UnscaleForDpi(Monitor{monitor}.GetDpi());
+	auto const dpiX = Monitor{ monitor }.GetDpi();
+	layoutResult.UnscaleForDpi(dpiX);
 
 	winrt::get_self<winrt::SnapLayout::implementation::AcrylicVisualWindow>(winrt::SnapLayout::implementation::AcrylicVisualWindow::Instance)->SetVisualPosition(layoutResult, draggedWindow, dpiX, rcWork);
 

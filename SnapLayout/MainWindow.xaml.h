@@ -43,6 +43,7 @@ namespace winrt::SnapLayout::implementation
         static MainWindow* GetInstance();
     private:
         void moveToMonitor(HMONITOR monitor);
+        winrt::fire_and_forget layoutOtherWindows();
         ThumbnailVisualContainerWindow* thumbnailWindow{ nullptr };
         winrt::SnapLayout::OverviewWindow m_overviewWindow;
         OverviewWindow* m_overviewWindowImpl = winrt::get_self<implementation::OverviewWindow>(m_overviewWindow);

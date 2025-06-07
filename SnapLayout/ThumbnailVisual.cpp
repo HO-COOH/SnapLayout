@@ -71,7 +71,10 @@ static winrt::Windows::UI::Composition::Visual createCompositionVisualForHwnd(
 	HWND target,
 	IDCompositionDesktopDevice* dcompDevice)
 {
-	SIZE thumbnailVisualSize = queryWindowThumbnailSize(hwnd);
+	//SIZE thumbnailVisualSize = queryWindowThumbnailSize(hwnd);
+	RECT windowRect;
+	GetWindowRect(hwnd, &windowRect);
+	SIZE thumbnailVisualSize{ windowRect.right - windowRect.left, windowRect.bottom - windowRect.top };
 	auto thumbnailVisual = createWindowThumbnail(hwnd, target, dcompDevice, thumbnailVisualSize);
 	return directCompositionVisualToVisual(dcompDevice, thumbnailVisual.get(), thumbnailVisualSize);
 }

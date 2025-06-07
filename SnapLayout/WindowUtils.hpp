@@ -8,3 +8,11 @@
 	winrt::check_hresult(window.as<IWindowNative>()->get_WindowHandle(&hwnd));
 	return hwnd;
 }
+
+[[nodiscard]] inline bool IsWindowResizable(HWND hwnd, bool visibleOnly = false)
+{
+	auto const style = GetWindowLongPtr(hwnd, GWL_STYLE);
+	return visibleOnly? 
+		(style & WS_THICKFRAME) && (style & WS_VISIBLE) :
+		(style & WS_THICKFRAME);
+}

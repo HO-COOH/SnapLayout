@@ -127,11 +127,13 @@
     <ClInclude Include="Interop.hpp" />
     <ClInclude Include="LayoutFunctions.h" />
     <ClInclude Include="LayoutResult.h" />
+    <ClInclude Include="MonitorWrapper.h" />
     <ClInclude Include="MouseHookDll.h" />
     <ClInclude Include="OverviewWindow.xaml.h">
       <DependentUpon>OverviewWindow.xaml</DependentUpon>
       <SubType>Code</SubType>
     </ClInclude>
+    <ClInclude Include="OverviewWindowFilter.h" />
     <ClInclude Include="pch.h" />
     <ClInclude Include="App.xaml.h">
       <DependentUpon>App.xaml</DependentUpon>
@@ -142,6 +144,10 @@
     <ClInclude Include="RoundedAcrylicVisual.h" />
     <ClInclude Include="ThumbnailVisual.h" />
     <ClInclude Include="ThumbnailVisualContainerWindow.h" />
+    <ClInclude Include="ThumbnailVisualControl.h">
+      <DependentUpon>ThumbnailVisualControl.idl</DependentUpon>
+      <SubType>Code</SubType>
+    </ClInclude>
     <ClInclude Include="User32PrivateApi.h" />
     <ClInclude Include="WindowDragEventListener.h" />
     <ClInclude Include="WindowModel.h">
@@ -170,11 +176,13 @@
     <ClCompile Include="FreezableThumbnailVisual.cpp" />
     <ClCompile Include="LayoutFunctions.cpp" />
     <ClCompile Include="LayoutResult.cpp" />
+    <ClCompile Include="MonitorWrapper.cpp" />
     <ClCompile Include="MouseHookDll.cpp" />
     <ClCompile Include="OverviewWindow.xaml.cpp">
       <DependentUpon>OverviewWindow.xaml</DependentUpon>
       <SubType>Code</SubType>
     </ClCompile>
+    <ClCompile Include="OverviewWindowFilter.cpp" />
     <ClCompile Include="pch.cpp">
       <PrecompiledHeader>Create</PrecompiledHeader>
     </ClCompile>
@@ -188,6 +196,10 @@
     <ClCompile Include="RoundedAcrylicVisual.cpp" />
     <ClCompile Include="ThumbnailVisual.cpp" />
     <ClCompile Include="ThumbnailVisualContainerWindow.cpp" />
+    <ClCompile Include="ThumbnailVisualControl.cpp">
+      <DependentUpon>ThumbnailVisualControl.idl</DependentUpon>
+      <SubType>Code</SubType>
+    </ClCompile>
     <ClCompile Include="User32PrivateApi.cpp" />
     <ClCompile Include="WindowDragEventListener.cpp" />
     <ClCompile Include="WindowModel.cpp">
@@ -207,6 +219,9 @@
     <Midl Include="OverviewWindow.idl">
       <DependentUpon>OverviewWindow.xaml</DependentUpon>
       <SubType>Code</SubType>
+    </Midl>
+    <Midl Include="ThumbnailVisualControl.idl">
+      <SubType>Designer</SubType>
     </Midl>
     <Midl Include="WindowModel.idl">
       <SubType>Designer</SubType>
