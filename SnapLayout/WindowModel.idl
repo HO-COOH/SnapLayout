@@ -2,9 +2,10 @@ namespace SnapLayout
 {
     [bindable]
     [default_interface]
-    runtimeclass WindowModel 
+    runtimeclass WindowModel : Microsoft.UI.Xaml.Data.INotifyPropertyChanged
     {
         WindowModel(UInt64 handle);
+	    Microsoft.UI.Xaml.Media.ImageSource Icon{ get; };
         UInt64 Handle{ get; };
         String Title{ get; };
     }

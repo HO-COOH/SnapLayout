@@ -1,10 +1,11 @@
 ﻿#pragma once
 
 #include "WindowModel.g.h"
+#include <include/PropertyChangeHelper.hpp>
 
 namespace winrt::SnapLayout::implementation
 {
-    struct WindowModel : WindowModelT<WindowModel>
+    struct WindowModel : WindowModelT<WindowModel>, MvvmHelper::PropertyChangeHelper<WindowModel>
     {
         WindowModel(uint64_t handle);
 
@@ -12,7 +13,10 @@ namespace winrt::SnapLayout::implementation
 
         winrt::hstring Title();
 
+        winrt::Microsoft::UI::Xaml::Media::ImageSource Icon();
     private:
+        void loadIcon();
+        winrt::Microsoft::UI::Xaml::Media::ImageSource m_icon{ nullptr };
         HWND m_hwnd;
     };
 }
