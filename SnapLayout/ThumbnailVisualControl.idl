@@ -6,5 +6,6 @@ namespace SnapLayout
     {
         ThumbnailVisualControl();
         UInt64 Handle;
+        Microsoft.UI.Composition.Visual PlacementVisual{ get; };
     }
 }

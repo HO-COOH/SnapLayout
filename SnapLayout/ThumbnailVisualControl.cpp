@@ -40,6 +40,11 @@ namespace winrt::SnapLayout::implementation
 		DebugLog(L"{:x} {} : W: {}, H: {}\n", value, title, originalWindowRect.right - originalWindowRect.left, originalWindowRect.bottom - originalWindowRect.top);
 	}
 
+	winrt::Microsoft::UI::Composition::Visual ThumbnailVisualControl::PlacementVisual()
+	{
+		return m_placementVisual;
+	}
+
 	void ThumbnailVisualControl::updateVisual()
 	{
 		if (!m_handle)
@@ -55,11 +60,11 @@ namespace winrt::SnapLayout::implementation
 				OverviewWindow::dcompDevice,
 			};
 			m_outputLink.as<winrt::Windows::UI::Composition::CompositionTarget>().Root(m_thumbnail);
-			auto placementVisual = m_outputLink.PlacementVisual();
+			m_placementVisual = m_outputLink.PlacementVisual();
 			m_thumbnail.Scale({ ShrinkPercentage, ShrinkPercentage, 1.f });
 			auto size = ActualSize();
-			placementVisual.Size(size);
-			winrt::Microsoft::UI::Xaml::Hosting::ElementCompositionPreview::SetElementChildVisual(*this, placementVisual);
+			m_placementVisual.Size(size);
+			winrt::Microsoft::UI::Xaml::Hosting::ElementCompositionPreview::SetElementChildVisual(*this, m_placementVisual);
 		}
 	}
 

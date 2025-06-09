@@ -46,11 +46,11 @@ namespace winrt::SnapLayout::implementation
     /// <param name="e">Details about the launch request and process.</param>
     void App::OnLaunched([[maybe_unused]] winrt::Microsoft::UI::Xaml::LaunchActivatedEventArgs const& e)
     {
-        window = make<MainWindow>();
-        winrt::SnapLayout::AcrylicVisualWindow{};
-        MouseHookDll::Set(MainWindow::g_instance);
-        WindowDragEventListener::Set();
 
+        winrt::SnapLayout::AcrylicVisualWindow{};
+        //MouseHookDll::Set(MainWindow::g_instance);
+        WindowDragEventListener::Set();
+        window = make<MainWindow>();
         //TODO: Debug only
         //ThumbnailVisualContainerWindow::Instance().SetVisual(
         //    FindWindowW(L"Shell_TrayWnd", nullptr),

@@ -10,6 +10,11 @@
 #include "Interop.hpp"
 #include "DirectXFactory.h"
 #include "OverviewWindowFilter.h"
+#include <winrt/Microsoft.UI.Xaml.Media.Imaging.h>
+#include <winrt/Windows.Storage.Streams.h>
+#include <winrt/Windows.Graphics.Imaging.h>
+#include <random>
+#include "WindowModel.h"
 
 // To learn more about WinUI, the WinUI project structure,
 // and more about our project templates, see: http://aka.ms/winui-project-info.
@@ -53,6 +58,8 @@ namespace winrt::SnapLayout::implementation
 		m_controller.Kind(winrt::Microsoft::UI::Composition::SystemBackdrops::DesktopAcrylicKind::Thin);
 		m_acrylicVisual = RoundedAcrylicVisual{ m_backdropLink.PlacementVisual(), compositor, AcrylicVisualWindow::CornerRadius };
 		winrt::Microsoft::UI::Xaml::Hosting::ElementCompositionPreview::SetElementChildVisual(element, m_acrylicVisual);
+		
+		ShowAndPlaceWindowAsync({ .width = 1000, .height = 2100 });
 	}
 
 	void OverviewWindow::SizeChanged(winrt::Windows::Foundation::IInspectable const& sender, winrt::Microsoft::UI::Xaml::RoutedEventArgs const& e)
@@ -131,5 +138,115 @@ namespace winrt::SnapLayout::implementation
 			},
 			reinterpret_cast<LPARAM>(this)
 		);
+	}
+
+	//You cannot pass in an element that uses PlacementVisual
+	static winrt::Windows::Foundation::IAsyncOperation<winrt::Microsoft::UI::Composition::CompositionSurfaceBrush> getBrushFromElement(
+		winrt::Microsoft::UI::Xaml::UIElement const& element,
+		winrt::Microsoft::UI::Composition::Compositor const& compositor)
+	{
+		winrt::Microsoft::UI::Xaml::Media::Imaging::RenderTargetBitmap bitmap;
+		co_await bitmap.RenderAsync(element);
+		auto pixelBuffer = co_await bitmap.GetPixelsAsync();		
+		auto const length = pixelBuffer.Length();
+		winrt::Windows::Storage::Streams::InMemoryRandomAccessStream stream;
+		auto encoder = co_await winrt::Windows::Graphics::Imaging::BitmapEncoder::CreateAsync(
+			winrt::Windows::Graphics::Imaging::BitmapEncoder::PngEncoderId(),
+			stream
+		);
+		encoder.SetPixelData(
+			winrt::Windows::Graphics::Imaging::BitmapPixelFormat::Bgra8,
+			winrt::Windows::Graphics::Imaging::BitmapAlphaMode::Premultiplied,
+			bitmap.PixelWidth(),
+			bitmap.PixelHeight(),
+			96,
+			96,
+			{ pixelBuffer.data(), pixelBuffer.data() + length }
+		);
+
+		co_await encoder.FlushAsync();
+		stream.Seek(0);
+		auto surface = winrt::Microsoft::UI::Xaml::Media::LoadedImageSurface::StartLoadFromStream(stream);
+		co_return compositor.CreateSurfaceBrush(surface);
+	}
+
+	static winrt::Windows::Foundation::IAsyncOperation<winrt::Microsoft::UI::Composition::CompositionSurfaceBrush> getBrushFromWritableBitmap(
+		winrt::Microsoft::UI::Xaml::Media::Imaging::WriteableBitmap const& bitmap,
+		winrt::Microsoft::UI::Composition::Compositor const& compositor
+	)
+	{
+		auto buffer = bitmap.PixelBuffer();
+	}
+
+	static winrt::fire_and_forget playWindowClosedAnimation(winrt::Microsoft::UI::Xaml::Controls::Button const& button)
+	{
+		auto element = button
+			.Parent()
+			.as<winrt::Microsoft::UI::Xaml::Controls::Grid>()
+			.Children()
+			.GetAt(2)
+			.as<winrt::SnapLayout::ThumbnailVisualControl>();
+		//auto visual = winrt::Microsoft::UI::Xaml::Hosting::ElementCompositionPreview::GetElementVisual(element);
+		auto visual = element.PlacementVisual();
+		auto compositor = visual.Compositor();
+
+		constexpr static auto row = 5;
+		constexpr static auto column = 5;
+		constexpr static std::chrono::milliseconds duration{ 1500 };
+
+		auto brush = co_await getBrushFromElement(element, compositor);
+		auto container = compositor.CreateContainerVisual();
+		auto children = container.Children();
+
+		auto size = element.ActualSize();
+		auto spriteSize = size / 5.f;
+
+		static std::mt19937 eng;
+		std::uniform_real_distribution<float> upPosition{ 50.f, 100.f };
+		std::uniform_real_distribution<float> downPosition{ -100.f, 100.f };
+		std::uniform_real_distribution<float> rotation{ -360.f * 3, 360.f * 3 };
+		brush.Scale({ 0.2f, 0.2f });
+		for (auto i = 0; i < row; ++i)
+		{
+			for (auto j = 0; j < column; ++j)
+			{
+				auto sprite = compositor.CreateSpriteVisual();
+				sprite.Brush(brush);
+				sprite.Size(spriteSize);
+
+				//animation
+				winrt::Windows::Foundation::Numerics::float3 const originalPosition{
+					i * spriteSize.x,
+					j * spriteSize.y,
+					0.f
+				};
+				auto offsetAnimation = compositor.CreateVector3KeyFrameAnimation();
+				offsetAnimation.InsertKeyFrame(0.f, originalPosition);
+				offsetAnimation.InsertKeyFrame(0.2f, originalPosition + winrt::Windows::Foundation::Numerics::float3{ upPosition(eng), upPosition(eng), 0.f });
+				offsetAnimation.InsertKeyFrame(1.f, originalPosition + winrt::Windows::Foundation::Numerics::float3{ downPosition(eng), size.y * 2, 0.f });
+				offsetAnimation.Duration(duration);
+
+				auto rotationAnimation = compositor.CreateScalarKeyFrameAnimation();
+				rotationAnimation.InsertKeyFrame(1.f, rotation(eng));
+				rotationAnimation.Duration(duration);
+
+				sprite.StartAnimation(L"Offset", offsetAnimation);
+				sprite.StartAnimation(L"RotationAngleInDegrees", rotationAnimation);
+
+				//add to container
+				children.InsertAtTop(sprite);
+			}
+		}
+		winrt::Microsoft::UI::Xaml::Hosting::ElementCompositionPreview::SetElementChildVisual(element, container);
+	}
+
+	void OverviewWindow::CloseWindowButton_Click(
+		winrt::Windows::Foundation::IInspectable const& sender, 
+		winrt::Microsoft::UI::Xaml::RoutedEventArgs const& e)
+	{
+		auto button = sender.as<winrt::Microsoft::UI::Xaml::Controls::Button>();
+		auto model = button.DataContext().as<winrt::SnapLayout::WindowModel>();
+		SendMessage(winrt::get_self<WindowModel>(model)->m_hwnd, WM_SYSCOMMAND, SC_CLOSE, 0);
+		//playWindowClosedAnimation(button);
 	}
 }

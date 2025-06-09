@@ -24,6 +24,7 @@ namespace winrt::SnapLayout::implementation
         void Hide();
 
         void SizeChanged(winrt::Windows::Foundation::IInspectable const& sender, winrt::Microsoft::UI::Xaml::RoutedEventArgs const& e);
+		void CloseWindowButton_Click(winrt::Windows::Foundation::IInspectable const& sender, winrt::Microsoft::UI::Xaml::RoutedEventArgs const& e);
 
         winrt::Windows::Foundation::Collections::IObservableVector<SnapLayout::WindowModel> Windows();
 

@@ -14,10 +14,11 @@ namespace winrt::SnapLayout::implementation
         winrt::hstring Title();
 
         winrt::Microsoft::UI::Xaml::Media::ImageSource Icon();
+
+        HWND m_hwnd;
     private:
         void loadIcon();
         winrt::Microsoft::UI::Xaml::Media::ImageSource m_icon{ nullptr };
-        HWND m_hwnd;
     };
 }
 
