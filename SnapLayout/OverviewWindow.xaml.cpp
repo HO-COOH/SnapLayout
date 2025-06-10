@@ -15,6 +15,7 @@
 #include <winrt/Windows.Graphics.Imaging.h>
 #include <random>
 #include "WindowModel.h"
+#include <winrt/Microsoft.UI.Windowing.h>
 
 // To learn more about WinUI, the WinUI project structure,
 // and more about our project templates, see: http://aka.ms/winui-project-info.
@@ -27,7 +28,7 @@ namespace winrt::SnapLayout::implementation
 	OverviewWindow::OverviewWindow()
 	{
 		m_hwnd = GetHwnd(*this);
-
+		AppWindow().IsShownInSwitchers(false);
 		Instance = m_hwnd;
 		AddToFilter(m_hwnd);
 
@@ -59,7 +60,8 @@ namespace winrt::SnapLayout::implementation
 		m_acrylicVisual = RoundedAcrylicVisual{ m_backdropLink.PlacementVisual(), compositor, AcrylicVisualWindow::CornerRadius };
 		winrt::Microsoft::UI::Xaml::Hosting::ElementCompositionPreview::SetElementChildVisual(element, m_acrylicVisual);
 		
-		ShowAndPlaceWindowAsync({ .width = 1000, .height = 2100 });
+		//TODO: debug only
+		//ShowAndPlaceWindowAsync({ .width = 1000, .height = 2100 });
 	}
 
 	void OverviewWindow::SizeChanged(winrt::Windows::Foundation::IInspectable const& sender, winrt::Microsoft::UI::Xaml::RoutedEventArgs const& e)
@@ -95,48 +97,84 @@ namespace winrt::SnapLayout::implementation
 		}
 	}
 
-	void OverviewWindow::ShowAndPlaceWindowAsync(LayoutResult layout)
+	void OverviewWindow::WindowThumbnail_Click(
+		winrt::Windows::Foundation::IInspectable const& sender,
+		winrt::Microsoft::UI::Xaml::RoutedEventArgs const& args
+	)
 	{
+		auto windowModel = sender.as<winrt::Microsoft::UI::Xaml::Controls::Button>()
+			.DataContext()
+			.as<winrt::SnapLayout::WindowModel>();
+		//Do not use winrt::check_bool here because the window might be invalid
+		SetWindowPos(
+			winrt::get_self<WindowModel>(windowModel)->m_hwnd,
+			nullptr,
+			m_windowPlacement.x,
+			m_windowPlacement.y,
+			m_windowPlacement.width,
+			m_windowPlacement.height,
+			0
+		);
+		m_isWindowSelected = true;
+		Hide();
+		winrt::check_bool(SetEvent(m_windowSelectedEvent.get()));
+	}
+
+	winrt::Windows::Foundation::IAsyncOperation<bool> OverviewWindow::ShowAndPlaceWindowAsync(LayoutResult layout)
+	{
+		m_windowPlacement = layout;
+		m_isWindowSelected = false;
+		m_windowSelectedEvent.attach(CreateEvent(nullptr, false, false, nullptr));
 		initWindows();
 		WindowDragEventListener::SubscribeWindowEvent(this);
 		Activate();
-		SetWindowPos(m_hwnd, nullptr, layout.x, layout.y, layout.width, layout.height, SWP_NOZORDER | SWP_NOACTIVATE);
+		SetWindowPos(m_hwnd, nullptr, layout.x, layout.y, layout.width, layout.height, 0);
 		m_acrylicVisual.StartSizeAnimation({ 10.f, 10.f }, { layout.width, layout.height });
+		co_await winrt::resume_on_signal(m_windowSelectedEvent.get());
+		co_return m_isWindowSelected;
 	}
 
 	void OverviewWindow::Hide()
 	{
 		WindowDragEventListener::UnsubscribeWindowEvent(this);
 		ShowWindow(m_hwnd, SW_HIDE);
+		m_windows.Clear();
+		m_windowRef.clear();
 	}
 
 	void OverviewWindow::initWindows()
 	{
-		m_windows.Clear();
-		m_windowRef.clear();
+		struct EnumData
+		{
+			DWORD explorerPid{};
+			OverviewWindow* self;
 
-		static DWORD explorerPid = 0;
-		HWND hShellWnd = FindWindow(L"Shell_TrayWnd", nullptr);
-		GetWindowThreadProcessId(hShellWnd, &explorerPid);
+			EnumData(OverviewWindow* self) : self{self}
+			{
+				HWND hShellWnd = FindWindow(L"Shell_TrayWnd", nullptr);
+				GetWindowThreadProcessId(hShellWnd, &explorerPid);
+			}
+		} data{ this };
 
 		EnumWindows(
 			+[](HWND hwnd, LPARAM lparam) -> BOOL
 			{
-				if (IsWindowResizable(hwnd, true) && !IsInFilter(hwnd))
-				{
-					wchar_t className[MAX_PATH]{};
-					GetClassName(hwnd, className, std::size(className));
-					DWORD pid;
-					GetWindowThreadProcessId(hwnd, &pid);
+				if (!IsWindowResizable(hwnd, true) || IsInFilter(hwnd))
+					return true;
+				
+				wchar_t className[MAX_PATH]{};
+				GetClassName(hwnd, className, std::size(className));
+				DWORD pid;
+				GetWindowThreadProcessId(hwnd, &pid);
 
-					if (std::wstring_view{ className } == L"ApplicationFrameWindow" && pid == explorerPid)
-						return true;
+				auto enumData = reinterpret_cast<EnumData*>(lparam);
+				if (std::wstring_view{ className } == L"ApplicationFrameWindow" && pid == enumData->explorerPid)
+					return true;
 
-					reinterpret_cast<OverviewWindow*>(lparam)->OnWindowCreated(hwnd);
-				}
+				enumData->self->OnWindowCreated(hwnd);
 				return true;
 			},
-			reinterpret_cast<LPARAM>(this)
+			reinterpret_cast<LPARAM>(&data)
 		);
 	}
 
@@ -248,5 +286,17 @@ namespace winrt::SnapLayout::implementation
 		auto model = button.DataContext().as<winrt::SnapLayout::WindowModel>();
 		SendMessage(winrt::get_self<WindowModel>(model)->m_hwnd, WM_SYSCOMMAND, SC_CLOSE, 0);
 		//playWindowClosedAnimation(button);
+	}
+
+	void OverviewWindow::Window_Activated(
+		winrt::Windows::Foundation::IInspectable const& sender, 
+		winrt::Microsoft::UI::Xaml::WindowActivatedEventArgs const& args)
+	{
+		if (args.WindowActivationState() != winrt::Microsoft::UI::Xaml::WindowActivationState::Deactivated)
+			return;
+		
+		Hide();
+		winrt::check_bool(SetEvent(m_windowSelectedEvent.get()));
+		args.Handled(true);
 	}
 }

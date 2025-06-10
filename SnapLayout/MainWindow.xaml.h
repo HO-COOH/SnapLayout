@@ -24,7 +24,7 @@ namespace winrt::SnapLayout::implementation
             DWORD_PTR dwRefData
         );
 
-        static LayoutResult GetButtonLayoutResult(
+        LayoutResult GetButtonLayoutResult(
             winrt::Microsoft::UI::Xaml::Controls::Button const& button
         );
 
@@ -48,6 +48,9 @@ namespace winrt::SnapLayout::implementation
         winrt::SnapLayout::OverviewWindow m_overviewWindow;
         OverviewWindow* m_overviewWindowImpl = winrt::get_self<implementation::OverviewWindow>(m_overviewWindow);
         winrt::Microsoft::UI::Windowing::AppWindow m_appWindow{ nullptr };
+        /*  Using a cache to store the layout result of buttons will save us from ~20 microseconds to <1 microseconds on my PC
+            You can comment out the ScopeTimer in `GetButtonLayoutResult()` to see the difference   */
+        std::unordered_map<winrt::Microsoft::UI::Xaml::Controls::Button, LayoutResult> cache;
         bool m_hasExitCompleted = true;
         bool m_shouldHideWindow = true;
         static winrt::SnapLayout::MainWindow Instance;

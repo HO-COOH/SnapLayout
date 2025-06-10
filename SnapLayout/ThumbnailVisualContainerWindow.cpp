@@ -13,7 +13,7 @@ ThumbnailVisualContainerWindow::ThumbnailVisualContainerWindow() : BaseWindow{
 #if defined(_DEBUG) || defined(DEBUG) // in debug let the window show on taskbar
 		WS_EX_OVERLAPPEDWINDOW | WS_EX_NOREDIRECTIONBITMAP | WS_EX_TOPMOST/* | WS_EX_TOOLWINDOW*/,
 #else
-		WS_EX_OVERLAPPEDWINDOW | WS_EX_NOREDIRECTIONBITMAP | WS_EX_TOPMOST | WS_EX_TOOLWINDOW
+		WS_EX_OVERLAPPEDWINDOW | WS_EX_NOREDIRECTIONBITMAP | WS_EX_TOPMOST | WS_EX_TOOLWINDOW,
 #endif
 		WS_POPUPWINDOW,
 		CW_USEDEFAULT,
@@ -22,7 +22,6 @@ ThumbnailVisualContainerWindow::ThumbnailVisualContainerWindow() : BaseWindow{
 		640
 	}
 {
-	ShowWindow(m_hwnd.get(), SW_HIDE);
 	DirectXFactory::Init();
 	auto interopCompositorFactory = winrt::get_activation_factory<winrt::Windows::UI::Composition::Compositor, IInteropCompositorFactoryPartner>();
 	winrt::com_ptr<IInteropCompositorPartner> interopCompositor;
@@ -131,7 +130,7 @@ void ThumbnailVisualContainerWindow::Hide()
 	}
 	auto scopedBatch = compositor.CreateScopedBatch(winrt::Windows::UI::Composition::CompositionBatchTypes::Animation);
 	scopedBatch.Completed([this](auto&&...) { 
-		ShowWindow(currentVisualHwnd, SW_SHOW);
+		ShowWindow(currentVisualHwnd, SW_SHOWNOACTIVATE);
 		ShowWindow(m_hwnd.get(), SW_HIDE); 
 	});
 	visual->StartAnimation(L"Scale", restoreAnimation);

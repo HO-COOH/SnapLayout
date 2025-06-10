@@ -96,7 +96,8 @@ public:
 		AddToFilter(hwnd);
 		SetWindowLongPtr(hwnd, GWLP_USERDATA, reinterpret_cast<LONG_PTR>(static_cast<T*>(this)));
 
-		ShowWindow(hwnd, SW_SHOW);
+		if (style & WS_VISIBLE)
+			ShowWindow(hwnd, SW_SHOW);
 		m_hwnd.reset(hwnd);
 	}
 

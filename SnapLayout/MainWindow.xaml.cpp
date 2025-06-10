@@ -102,7 +102,7 @@ namespace winrt::SnapLayout::implementation
 								winrt::Microsoft::UI::Xaml::VisualStateManager::GoToState(self->m_previousButton, L"Normal", true);
 							winrt::Microsoft::UI::Xaml::VisualStateManager::GoToState(button, L"PointerOver", true);
 							self->m_previousButton = button;
-							self->m_previousButtonWindowPlacement = LayoutImpl(GetButtonLayoutResult(button),
+							self->m_previousButtonWindowPlacement = LayoutImpl(self->GetButtonLayoutResult(button),
 								MonitorFromWindow(g_instance, MONITOR_DEFAULTTONEAREST),
 								draggedWindow
 							);
@@ -170,14 +170,15 @@ namespace winrt::SnapLayout::implementation
 	winrt::fire_and_forget MainWindow::layoutOtherWindows()
 	{
 		auto previousButtonCopy = m_previousButton;
+		auto const monitor = MonitorFromWindow(g_instance, MONITOR_DEFAULTTONEAREST);
 		for (auto parentGridChild : previousButtonCopy.Parent().as<winrt::Microsoft::UI::Xaml::Controls::Grid>().Children())
 		{
 			if (auto button = parentGridChild.as<winrt::Microsoft::UI::Xaml::Controls::Button>(); button != previousButtonCopy)
 			{
 				LayoutResult overviewWindowPlacement = GetButtonLayoutResult(button);
-				ConvertLayoutToMonitorWindowPlacement(overviewWindowPlacement, MonitorFromWindow(g_instance, MONITOR_DEFAULTTONEAREST));
-				m_overviewWindowImpl->ShowAndPlaceWindowAsync(overviewWindowPlacement);
-				break;
+				ConvertLayoutToMonitorWindowPlacement(overviewWindowPlacement, monitor);
+				if (!(co_await m_overviewWindowImpl->ShowAndPlaceWindowAsync(overviewWindowPlacement)))
+					break;
 			}
 		}
 		co_return;
@@ -185,6 +186,23 @@ namespace winrt::SnapLayout::implementation
 
 	LayoutResult MainWindow::GetButtonLayoutResult(winrt::Microsoft::UI::Xaml::Controls::Button const& button)
 	{
+		class ScopedTimer
+		{
+			std::chrono::steady_clock::time_point m_startTime = std::chrono::steady_clock::now();
+		public:
+			~ScopedTimer()
+			{
+				auto const endTime = std::chrono::steady_clock::now();
+				OutputDebugStringA(std::format("Took {} ms\n", std::chrono::duration_cast<std::chrono::microseconds>(endTime - m_startTime).count()).data());
+			}
+		};
+		//ScopedTimer t;
+		
+		if (auto cached = cache.find(button); cached != cache.end())
+		{
+			return cached->second;
+		}
+
 		auto parentGrid = button.Parent().as<winrt::Microsoft::UI::Xaml::Controls::Grid>();
 		/*Instead of calculating rowTotal, buttonRow in two pass, we can hand write one for loop, better performance*/
 
@@ -229,12 +247,14 @@ namespace winrt::SnapLayout::implementation
 			buttonColTotal = 1;
 		}
 
-		return LayoutResult{ 
+		auto ret = LayoutResult{ 
 			.x = static_cast<float>(colBeforeButton / colTotal), 
 			.y = static_cast<float>(rowBeforeButton / rowTotal),
 			.width = static_cast<float>(buttonColTotal / colTotal),
 			.height = static_cast<float>(buttonRowTotal / rowTotal)
 		};
+		cache[button] = ret;
+		return ret;
 	}
 
 	MainWindow* MainWindow::GetInstance()
