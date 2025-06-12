@@ -117,8 +117,14 @@ ThumbnailVisualContainerWindow& ThumbnailVisualContainerWindow::Instance()
 	return s_instance;
 }
 
-void ThumbnailVisualContainerWindow::Hide()
+void ThumbnailVisualContainerWindow::Hide(bool animation)
 {
+	if (!animation)
+	{
+		ShowWindow(m_hwnd.get(), SW_HIDE);
+		return;
+	}
+
 	if (!visual)
 		return;
 

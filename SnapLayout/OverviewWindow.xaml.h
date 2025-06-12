@@ -6,8 +6,10 @@
 #include "INotifyWindowEvent.hpp"
 #include <unordered_map>
 #include "LayoutResult.h"
+#include <winrt/Microsoft.UI.Xaml.Media.h>
 
 struct IDCompositionDesktopDevice;
+
 
 namespace winrt::SnapLayout::implementation
 {
@@ -31,10 +33,10 @@ namespace winrt::SnapLayout::implementation
         void Hide();
 
         void SizeChanged(winrt::Windows::Foundation::IInspectable const& sender, winrt::Microsoft::UI::Xaml::RoutedEventArgs const& e);
-		void CloseWindowButton_Click(winrt::Windows::Foundation::IInspectable const& sender, winrt::Microsoft::UI::Xaml::RoutedEventArgs const& e);
 		void WindowThumbnail_Click(winrt::Windows::Foundation::IInspectable const& sender, winrt::Microsoft::UI::Xaml::RoutedEventArgs const& e);
         winrt::Windows::Foundation::Collections::IObservableVector<SnapLayout::WindowModel> Windows();
         void Window_Activated(winrt::Windows::Foundation::IInspectable const& sender, winrt::Microsoft::UI::Xaml::WindowActivatedEventArgs const& args);
+        static winrt::Microsoft::UI::Xaml::Visibility ConvertIconToVisibility(winrt::Microsoft::UI::Xaml::Media::ImageSource const& icon);
 
         static HWND Instance;
         static IDCompositionDesktopDevice* dcompDevice;
@@ -45,7 +47,7 @@ namespace winrt::SnapLayout::implementation
         winrt::Windows::Foundation::Collections::IObservableVector<SnapLayout::WindowModel> m_windows = winrt::single_threaded_observable_vector<SnapLayout::WindowModel>();
         std::unordered_map<HWND, winrt::weak_ref<SnapLayout::WindowModel>> m_windowRef; // hwnd <-> index in the IObservableVector
         HWND m_hwnd;
-        LayoutResult m_windowPlacement;
+        LayoutResult m_windowPlacement{};
         bool m_isWindowSelected{};
         winrt::handle m_windowSelectedEvent;
         void initWindows();

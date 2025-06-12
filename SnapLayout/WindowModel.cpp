@@ -132,10 +132,29 @@ namespace winrt::SnapLayout::implementation
 		return reinterpret_cast<uint64_t>(m_hwnd);
 	}
 
+	void WindowModel::SetWindowPos(LayoutResult layout)
+	{
+		//Do not use winrt::check_bool here because the window might be invalid
+		::SetWindowPos(
+			m_hwnd,
+			nullptr,
+			static_cast<int>(layout.x),
+			static_cast<int>(layout.y),
+			static_cast<int>(layout.width),
+			static_cast<int>(layout.height),
+			SWP_NOACTIVATE
+		);
+	}
+
 	winrt::hstring WindowModel::Title()
 	{
 		wchar_t title[MAX_PATH]{};
 		GetWindowText(m_hwnd, title, MAX_PATH);
 		return winrt::hstring{ title };
+	}
+
+	void WindowModel::Close()
+	{
+		SendMessage(m_hwnd, WM_SYSCOMMAND, SC_CLOSE, 0);
 	}
 }

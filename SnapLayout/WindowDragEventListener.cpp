@@ -13,7 +13,7 @@
 
 static std::optional<WindowDragEventListener> g_eventListener;
 
-VOID WindowDragEventListener::WinEventProc(HWINEVENTHOOK hWinEventHook, DWORD event, HWND hwnd, LONG idObject, LONG idChild, DWORD dwEventThread, DWORD dwmsEventTime)
+VOID WindowDragEventListener::WinEventProc(HWINEVENTHOOK, DWORD event, HWND hwnd, LONG idObject, LONG idChild, DWORD dwEventThread, DWORD dwmsEventTime)
 {
     if (idObject != OBJID_WINDOW || idChild != CHILDID_SELF)
         return;
@@ -28,7 +28,13 @@ VOID WindowDragEventListener::WinEventProc(HWINEVENTHOOK hWinEventHook, DWORD ev
     }
 }
 
-void WindowDragEventListener::onMoveSizeStart(DWORD event, HWND hwnd, LONG idObject, LONG idChild, DWORD dwEventThread, DWORD dwmsEventTime)
+void WindowDragEventListener::onMoveSizeStart(
+    [[maybe_unused]] DWORD event, 
+    HWND hwnd, 
+    [[maybe_unused]] LONG idObject, 
+    [[maybe_unused]] LONG idChild, 
+    [[maybe_unused]] DWORD dwEventThread, 
+    [[maybe_unused]] DWORD dwmsEventTime)
 {
     //Non-resizable window should not trigger snap layout
     if (!IsWindowResizable(hwnd) || !MouseHookDll::HasLButtonDown())
@@ -49,7 +55,13 @@ void WindowDragEventListener::onMoveSizeStart(DWORD event, HWND hwnd, LONG idObj
     ThumbnailVisualContainerWindow::Instance().SetVisual(g_eventListener->g_hwndTracked, g_eventListener->g_draggedWindowCursorPoint);
 }
 
-void WindowDragEventListener::onMoveSizeEnd(DWORD event, HWND hwnd, LONG idObject, LONG idChild, DWORD dwEventThread, DWORD dwmsEventTime)
+void WindowDragEventListener::onMoveSizeEnd(
+    [[maybe_unused]] DWORD event,
+    HWND hwnd,
+    [[maybe_unused]] LONG idObject,
+    [[maybe_unused]] LONG idChild,
+    [[maybe_unused]] DWORD dwEventThread,
+    [[maybe_unused]] DWORD dwmsEventTime)
 {
     if (hwnd != g_eventListener->g_hwndTracked)
         return;
@@ -64,14 +76,21 @@ void WindowDragEventListener::onMoveSizeEnd(DWORD event, HWND hwnd, LONG idObjec
     //winrt::SnapLayout::implementation::MainWindow::GetInstance()->OnDismiss();
 }
 
-void WindowDragEventListener::onObjectCreate(DWORD event, HWND hwnd, LONG idObject, LONG idChild, DWORD dwEventThread, DWORD dwmsEventTime)
+void WindowDragEventListener::onObjectCreate(
+    [[maybe_unused]] DWORD event,
+    HWND hwnd,
+    [[maybe_unused]] LONG idObject,
+    [[maybe_unused]] LONG idChild,
+    [[maybe_unused]] DWORD dwEventThread,
+    [[maybe_unused]] DWORD dwmsEventTime)
 {
     if (IsWindow(hwnd))
     {
-        //TODO: remove on release
+#if defined(_DEBUG) || defined(DEBUG)
         wchar_t title[MAX_PATH]{};
         GetWindowText(hwnd, title, MAX_PATH);
-        DebugLog(L"{}\n", title);
+        DebugLog(L"Window created: {}\n", std::wstring_view{ title }.empty() ? L"<<No title>>" : title);
+#endif
         if (g_eventListener->g_notifyWindowEvent && IsWindowResizable(hwnd))
         {
             g_eventListener->g_notifyWindowEvent->OnWindowCreated(hwnd);
@@ -79,9 +98,13 @@ void WindowDragEventListener::onObjectCreate(DWORD event, HWND hwnd, LONG idObje
     }
 }
 
-void WindowDragEventListener::onObjectDestroy(DWORD event, HWND hwnd, LONG idObject, LONG idChild, DWORD dwEventThread, DWORD dwmsEventTime)
+void WindowDragEventListener::onObjectDestroy([[maybe_unused]] DWORD event,
+    HWND hwnd,
+    [[maybe_unused]] LONG idObject,
+    [[maybe_unused]] LONG idChild,
+    [[maybe_unused]] DWORD dwEventThread,
+    [[maybe_unused]] DWORD dwmsEventTime)
 {
-    //DebugLog("Window destroyed.\n");
     if (g_eventListener->g_notifyWindowEvent)
         g_eventListener->g_notifyWindowEvent->OnWindowDestroyed(hwnd);
 }
@@ -123,7 +146,7 @@ POINT WindowDragEventListener::GetDraggedWindowPointOffset()
     return g_eventListener->g_draggedWindowCursorPoint;
 }
 
-void WindowDragEventListener::HideDraggedWindow(POINT cursorPoint, UINT dpi)
+void WindowDragEventListener::HideDraggedWindow(POINT cursorPoint, [[maybe_unused]] UINT dpi)
 {
     ThumbnailVisualContainerWindow::Instance().StartAnimation();
     ShowWindow(g_eventListener->g_hwndTracked, SW_HIDE);
@@ -132,11 +155,12 @@ void WindowDragEventListener::HideDraggedWindow(POINT cursorPoint, UINT dpi)
 
 void WindowDragEventListener::SubscribeWindowEvent(INotifyWindowEvent* handler)
 {
+    DebugLog("Subscribe window event\n");
     g_eventListener->g_notifyWindowEvent = handler;
 }
 
 void WindowDragEventListener::UnsubscribeWindowEvent(INotifyWindowEvent* handler)
 {
-    assert(g_eventListener->g_notifyWindowEvent == handler);
+    DebugLog("Unsubscribe window event\n");
     g_eventListener->g_notifyWindowEvent = nullptr;
 }

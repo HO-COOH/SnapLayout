@@ -6,8 +6,8 @@ class Monitor
 public:
 	Monitor(HMONITOR monitor);
 
-	MONITORINFO GetInfo() const;
-	UINT GetDpi() const;
+	[[nodiscard]] MONITORINFO GetInfo() const;
+	[[nodiscard]] UINT GetDpi() const;
 
 	static Monitor FromWindow(HWND hwnd, DWORD flags = MONITOR_DEFAULTTONEAREST);
 };

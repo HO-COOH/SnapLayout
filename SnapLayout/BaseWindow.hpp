@@ -24,15 +24,23 @@ protected:
 		return reinterpret_cast<T*>(GetWindowLongPtr(window, GWLP_USERDATA));
 	}
 
-	static void OnNCCreate(HWND hwnd, CREATESTRUCT* lparam)
+	static void OnNCCreate([[maybe_unused]] HWND hwnd, [[maybe_unused]] CREATESTRUCT* lparam)
 	{
 	}
 
-	static void OnSize(HWND hwnd, WPARAM wparam, UINT width, UINT height)
+	static void OnSize(
+		[[maybe_unused]] HWND hwnd,
+		[[maybe_unused]] WPARAM wparam,
+		[[maybe_unused]] UINT width, 
+		[[maybe_unused]] UINT height)
 	{
 	}
 
-	static void OnDpiChanged(HWND, WORD dpiX, WORD dpiY, RECT* suggestPosition)
+	static void OnDpiChanged(
+		[[maybe_unused]] HWND hwnd, 
+		[[maybe_unused]] WORD dpiX, 
+		[[maybe_unused]] WORD dpiY, 
+		[[maybe_unused]] RECT* suggestPosition)
 	{
 	}
 

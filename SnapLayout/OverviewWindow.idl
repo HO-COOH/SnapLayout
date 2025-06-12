@@ -8,5 +8,6 @@ namespace SnapLayout
         OverviewWindow();
 
         Windows.Foundation.Collections.IObservableVector<WindowModel> Windows{ get; };
+        static Microsoft.UI.Xaml.Visibility ConvertIconToVisibility(Microsoft.UI.Xaml.Media.ImageSource icon);
     }
 }

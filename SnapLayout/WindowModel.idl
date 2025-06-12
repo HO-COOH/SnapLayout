@@ -8,5 +8,7 @@ namespace SnapLayout
 	    Microsoft.UI.Xaml.Media.ImageSource Icon{ get; };
         UInt64 Handle{ get; };
         String Title{ get; };
+
+        void Close();
     }
 }

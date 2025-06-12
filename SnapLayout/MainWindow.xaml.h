@@ -11,7 +11,6 @@ namespace winrt::SnapLayout::implementation
     struct MainWindow : MainWindowT<MainWindow>
     {
         MainWindow();
-        void Grid_PointerEntered(winrt::Windows::Foundation::IInspectable const& sender, winrt::Microsoft::UI::Xaml::Input::PointerRoutedEventArgs const& e);
 
         static HWND g_instance;
 

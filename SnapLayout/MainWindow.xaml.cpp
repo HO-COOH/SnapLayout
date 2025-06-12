@@ -48,12 +48,7 @@ namespace winrt::SnapLayout::implementation
 		Instance = *this;
 	}
 
-	void MainWindow::Grid_PointerEntered(winrt::Windows::Foundation::IInspectable const& sender, winrt::Microsoft::UI::Xaml::Input::PointerRoutedEventArgs const& e)
-	{
-		DebugLog(L"Pointer entered\n");
-	}
-
-	LRESULT MainWindow::subclassProc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam, UINT_PTR uIdSubClass, DWORD_PTR dwRefData)
+	LRESULT MainWindow::subclassProc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam, [[maybe_unused]] UINT_PTR uIdSubClass, DWORD_PTR dwRefData)
 	{
 		switch (msg)
 		{
@@ -151,15 +146,23 @@ namespace winrt::SnapLayout::implementation
 	
 				if (self->m_previousButton)
 				{
-					winrt::check_bool(SetWindowPos(draggedWindow, nullptr,
-						self->m_previousButtonWindowPlacement.x,
-						self->m_previousButtonWindowPlacement.y,
-						self->m_previousButtonWindowPlacement.width,
-						self->m_previousButtonWindowPlacement.height,
-						0
+					winrt::check_bool(SetWindowPos(
+						draggedWindow, 
+						nullptr,
+						static_cast<int>(self->m_previousButtonWindowPlacement.x),
+						static_cast<int>(self->m_previousButtonWindowPlacement.y),
+						static_cast<int>(self->m_previousButtonWindowPlacement.width),
+						static_cast<int>(self->m_previousButtonWindowPlacement.height),
+						SWP_NOACTIVATE
 					));
+					if (self->thumbnailWindow)
+					{
+						self->thumbnailWindow->Hide();
+						self->thumbnailWindow = nullptr;
+					}
 
 					self->layoutOtherWindows();
+					self->m_previousButton = nullptr;
 				}
 				break;
 			}
@@ -209,10 +212,10 @@ namespace winrt::SnapLayout::implementation
 		auto const buttonRow = winrt::Microsoft::UI::Xaml::Controls::Grid::GetRow(button);
 		auto const buttonRowSpan = winrt::Microsoft::UI::Xaml::Controls::Grid::GetRowSpan(button);
 
-		double rowBeforeButton{}, rowTotal{}, buttonRowTotal{};
+		float rowBeforeButton{}, rowTotal{}, buttonRowTotal{};
 		for (int i = 0; auto row : parentGrid.RowDefinitions())
 		{
-			auto const current = row.Height().Value;
+			float const current = row.Height().Value;
 			rowTotal += current;
 			if (i < buttonRow)
 				rowBeforeButton += current;
@@ -229,10 +232,10 @@ namespace winrt::SnapLayout::implementation
 
 		auto const buttonCol = winrt::Microsoft::UI::Xaml::Controls::Grid::GetColumn(button);
 		auto const buttonColSpan = winrt::Microsoft::UI::Xaml::Controls::Grid::GetColumnSpan(button);
-		double colBeforeButton{}, colTotal{}, buttonColTotal{};
+		float colBeforeButton{}, colTotal{}, buttonColTotal{};
 		for (int i = 0; auto col : parentGrid.ColumnDefinitions())
 		{
-			auto const current = col.Width().Value;
+			float const current = col.Width().Value;
 			colTotal += current;
 			if (i < buttonCol)
 				colBeforeButton += current;
@@ -248,10 +251,10 @@ namespace winrt::SnapLayout::implementation
 		}
 
 		auto ret = LayoutResult{ 
-			.x = static_cast<float>(colBeforeButton / colTotal), 
-			.y = static_cast<float>(rowBeforeButton / rowTotal),
-			.width = static_cast<float>(buttonColTotal / colTotal),
-			.height = static_cast<float>(buttonRowTotal / rowTotal)
+			.x = (colBeforeButton / colTotal), 
+			.y = (rowBeforeButton / rowTotal),
+			.width = (buttonColTotal / colTotal),
+			.height = (buttonRowTotal / rowTotal)
 		};
 		cache[button] = ret;
 		return ret;
@@ -317,8 +320,8 @@ namespace winrt::SnapLayout::implementation
 	}
 
 	void MainWindow::OnGridExitAnimationCompleted(
-		winrt::Windows::Foundation::IInspectable const& sender,
-		winrt::Windows::Foundation::IInspectable const& arg
+		winrt::Windows::Foundation::IInspectable const&,
+		winrt::Windows::Foundation::IInspectable const&
 	)
 	{
 		m_hasExitCompleted = true;

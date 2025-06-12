@@ -27,17 +27,24 @@ namespace winrt::SnapLayout::implementation
 	{
 		m_handle = reinterpret_cast<HWND>(value);
 
-		//TODO: remove on release
-		wchar_t title[MAX_PATH]{};
-		GetWindowText(m_handle, title, std::size(title));
-
 		RECT originalWindowRect;
 		winrt::check_bool(GetWindowRect(m_handle, &originalWindowRect));
+	
+		auto const windowWidth = originalWindowRect.right - originalWindowRect.left;
+		auto const windowHeight = originalWindowRect.bottom - originalWindowRect.top;
+		
+		auto const finalWidth = std::clamp(windowWidth * ShrinkPercentage, MinWidth, MaxWidth);
+		m_finalScale = finalWidth / static_cast<float>(windowWidth);
+		auto const finalHeight = m_finalScale * windowHeight;
 
-		Width(ShrinkPercentage * (originalWindowRect.right - originalWindowRect.left));
-		Height(ShrinkPercentage * (originalWindowRect.bottom - originalWindowRect.top));
+		Width(finalWidth);
+		Height(finalHeight);
 
-		DebugLog(L"{:x} {} : W: {}, H: {}\n", value, title, originalWindowRect.right - originalWindowRect.left, originalWindowRect.bottom - originalWindowRect.top);
+#if defined(_DEBUG) || defined(DEBUG)
+		wchar_t title[MAX_PATH]{};
+		GetWindowText(m_handle, title, std::size(title));
+		DebugLog(L"{:x} {} : W: {}, H: {}\n", value, title, windowWidth, windowHeight);
+#endif
 	}
 
 	winrt::Microsoft::UI::Composition::Visual ThumbnailVisualControl::PlacementVisual()
@@ -61,7 +68,7 @@ namespace winrt::SnapLayout::implementation
 			};
 			m_outputLink.as<winrt::Windows::UI::Composition::CompositionTarget>().Root(m_thumbnail);
 			m_placementVisual = m_outputLink.PlacementVisual();
-			m_thumbnail.Scale({ ShrinkPercentage, ShrinkPercentage, 1.f });
+			m_thumbnail.Scale({ m_finalScale, m_finalScale, 1.f });
 			auto size = ActualSize();
 			m_placementVisual.Size(size);
 			winrt::Microsoft::UI::Xaml::Hosting::ElementCompositionPreview::SetElementChildVisual(*this, m_placementVisual);

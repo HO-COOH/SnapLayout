@@ -16,6 +16,7 @@
 #include <random>
 #include "WindowModel.h"
 #include <winrt/Microsoft.UI.Windowing.h>
+#include "DebugHelper.hpp"
 
 // To learn more about WinUI, the WinUI project structure,
 // and more about our project templates, see: http://aka.ms/winui-project-info.
@@ -64,11 +65,16 @@ namespace winrt::SnapLayout::implementation
 		//ShowAndPlaceWindowAsync({ .width = 1000, .height = 2100 });
 	}
 
-	void OverviewWindow::SizeChanged(winrt::Windows::Foundation::IInspectable const& sender, winrt::Microsoft::UI::Xaml::RoutedEventArgs const& e)
+	void OverviewWindow::SizeChanged(winrt::Windows::Foundation::IInspectable const& sender, winrt::Microsoft::UI::Xaml::RoutedEventArgs const&)
 	{
 		auto control = sender.as<winrt::SnapLayout::ThumbnailVisualControl>();
 		auto width = control.ActualWidth();
 		control.Parent().as<winrt::Microsoft::UI::Xaml::Controls::Grid>().MaxWidth(width);
+	}
+
+	winrt::Microsoft::UI::Xaml::Visibility OverviewWindow::ConvertIconToVisibility(winrt::Microsoft::UI::Xaml::Media::ImageSource const& icon)
+	{
+		return icon ? winrt::Microsoft::UI::Xaml::Visibility::Visible : winrt::Microsoft::UI::Xaml::Visibility::Collapsed;
 	}
 
 	winrt::Windows::Foundation::Collections::IObservableVector<SnapLayout::WindowModel> OverviewWindow::Windows()
@@ -99,22 +105,12 @@ namespace winrt::SnapLayout::implementation
 
 	void OverviewWindow::WindowThumbnail_Click(
 		winrt::Windows::Foundation::IInspectable const& sender,
-		winrt::Microsoft::UI::Xaml::RoutedEventArgs const& args
+		winrt::Microsoft::UI::Xaml::RoutedEventArgs const&
 	)
 	{
-		auto windowModel = sender.as<winrt::Microsoft::UI::Xaml::Controls::Button>()
+		winrt::get_self<WindowModel>(sender.as<winrt::Microsoft::UI::Xaml::Controls::Button>()
 			.DataContext()
-			.as<winrt::SnapLayout::WindowModel>();
-		//Do not use winrt::check_bool here because the window might be invalid
-		SetWindowPos(
-			winrt::get_self<WindowModel>(windowModel)->m_hwnd,
-			nullptr,
-			m_windowPlacement.x,
-			m_windowPlacement.y,
-			m_windowPlacement.width,
-			m_windowPlacement.height,
-			0
-		);
+			.as<winrt::SnapLayout::WindowModel>())->SetWindowPos(m_windowPlacement);
 		m_isWindowSelected = true;
 		Hide();
 		winrt::check_bool(SetEvent(m_windowSelectedEvent.get()));
@@ -128,9 +124,18 @@ namespace winrt::SnapLayout::implementation
 		initWindows();
 		WindowDragEventListener::SubscribeWindowEvent(this);
 		Activate();
-		SetWindowPos(m_hwnd, nullptr, layout.x, layout.y, layout.width, layout.height, 0);
+		SetWindowPos(
+			m_hwnd, 
+			nullptr, 
+			static_cast<int>(layout.x), 
+			static_cast<int>(layout.y), 
+			static_cast<int>(layout.width), 
+			static_cast<int>(layout.height), 
+			0
+		);
 		m_acrylicVisual.StartSizeAnimation({ 10.f, 10.f }, { layout.width, layout.height });
 		co_await winrt::resume_on_signal(m_windowSelectedEvent.get());
+		DebugLog(m_isWindowSelected ? "Overview window user selected window\n" : "Overview window user dismissed\n");
 		co_return m_isWindowSelected;
 	}
 
@@ -278,18 +283,8 @@ namespace winrt::SnapLayout::implementation
 		winrt::Microsoft::UI::Xaml::Hosting::ElementCompositionPreview::SetElementChildVisual(element, container);
 	}
 
-	void OverviewWindow::CloseWindowButton_Click(
-		winrt::Windows::Foundation::IInspectable const& sender, 
-		winrt::Microsoft::UI::Xaml::RoutedEventArgs const& e)
-	{
-		auto button = sender.as<winrt::Microsoft::UI::Xaml::Controls::Button>();
-		auto model = button.DataContext().as<winrt::SnapLayout::WindowModel>();
-		SendMessage(winrt::get_self<WindowModel>(model)->m_hwnd, WM_SYSCOMMAND, SC_CLOSE, 0);
-		//playWindowClosedAnimation(button);
-	}
-
 	void OverviewWindow::Window_Activated(
-		winrt::Windows::Foundation::IInspectable const& sender, 
+		winrt::Windows::Foundation::IInspectable const&, 
 		winrt::Microsoft::UI::Xaml::WindowActivatedEventArgs const& args)
 	{
 		if (args.WindowActivationState() != winrt::Microsoft::UI::Xaml::WindowActivationState::Deactivated)

@@ -35,7 +35,7 @@ FreezableThumbnailVisual::FreezableThumbnailVisual(
 				session.Clear(winrt::Windows::UI::Colors::Transparent());
 				session.DrawImage(canvasBitmap);
 			}
-			auto const dpi = GetDpiForWindow(hwnd);
+			//auto const dpi = GetDpiForWindow(hwnd);
 			auto spriteVisual = compositor.CreateSpriteVisual();
 			auto const size = frame.ContentSize();
 			spriteVisual.Size({ static_cast<float>(size.Width), static_cast<float>(size.Height) });

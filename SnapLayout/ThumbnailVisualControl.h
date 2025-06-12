@@ -21,8 +21,13 @@ namespace winrt::SnapLayout::implementation
         void updateVisual();
         winrt::Microsoft::UI::Content::ContentExternalOutputLink m_outputLink{ nullptr };
         winrt::Microsoft::UI::Composition::Visual m_placementVisual{ nullptr };
+        float m_finalScale{};
         ThumbnailVisual m_thumbnail{ nullptr };
         constexpr static auto ShrinkPercentage = 0.2f;
+        constexpr static auto MinWidth = 150.f;
+        constexpr static auto MinHeight = 100.f;
+		constexpr static auto MaxWidth = 400.f;
+		constexpr static auto MaxHeight = 300.f;
     };
 }
 

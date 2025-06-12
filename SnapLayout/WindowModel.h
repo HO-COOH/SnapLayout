@@ -2,6 +2,7 @@
 
 #include "WindowModel.g.h"
 #include <include/PropertyChangeHelper.hpp>
+#include "LayoutResult.h"
 
 namespace winrt::SnapLayout::implementation
 {
@@ -15,8 +16,11 @@ namespace winrt::SnapLayout::implementation
 
         winrt::Microsoft::UI::Xaml::Media::ImageSource Icon();
 
-        HWND m_hwnd;
+        void Close();
+
+        void SetWindowPos(LayoutResult layout);
     private:
+        HWND m_hwnd;
         void loadIcon();
         winrt::Microsoft::UI::Xaml::Media::ImageSource m_icon{ nullptr };
     };

@@ -186,11 +186,11 @@
                                     <ColumnDefinition Width="Auto"/>
                                 </Grid.ColumnDefinitions>
                                 <StackPanel VerticalAlignment="Center" HorizontalAlignment="Left" Orientation="Horizontal" Spacing="5" Margin="8,0,0,0" Height="{StaticResource WindowOverviewThumbnailTitleBarHeight}">
-                                    <Image Width="16" Height="16" Source="{x:Bind Icon}" />
+                                    <Image Width="16" Height="16" Source="{x:Bind Icon}" Visibility="{x:Bind local:OverviewWindow.ConvertIconToVisibility(Icon)}"/>
                                     <TextBlock TextTrimming="CharacterEllipsis" VerticalAlignment="Center" Text="{x:Bind Title}" />
                                 </StackPanel>
                                 <Button Height="{StaticResource WindowOverviewThumbnailTitleBarHeight}" Background="Transparent" 
-                                    HorizontalAlignment="Right" x:Name="CloseWindowButton" Click="CloseWindowButton_Click" CornerRadius="0,8,0,0" BorderThickness="0"
+                                    HorizontalAlignment="Right" x:Name="CloseWindowButton" Click="{x:Bind Close}" CornerRadius="0,8,0,0" BorderThickness="0"
                                     Width="40" Grid.Column="1">
                                     <Button.Resources>
                                         <ResourceDictionary>

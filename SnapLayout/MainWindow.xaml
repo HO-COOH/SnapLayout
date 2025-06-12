@@ -66,7 +66,7 @@
 
             </StackPanel.Resources>
 
-            <Grid Style="{StaticResource LayoutGridStyle}" PointerEntered="Grid_PointerEntered">
+            <Grid Style="{StaticResource LayoutGridStyle}">
                 <Grid.ColumnDefinitions>
                     <ColumnDefinition Width="*"/>
                     <ColumnDefinition Width="*"/>

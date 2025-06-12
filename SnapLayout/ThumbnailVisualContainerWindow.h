@@ -24,7 +24,7 @@ public:
 	static ThumbnailVisualContainerWindow& Instance();
 
 	void Show();
-	void Hide();
+	void Hide(bool animation = true);
 
 	void Move(int x, int y);
 };
