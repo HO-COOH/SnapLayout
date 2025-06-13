@@ -160,7 +160,7 @@
                 </Setter>
             </Style>
         </Grid.Resources>
-        <Border x:Name="RootGrid" BorderThickness="1" Loaded="RootGrid_Loaded"/>
+        <Border x:Name="RootGrid" BorderThickness="1" Padding="10" Loaded="RootGrid_Loaded"/>
         <ItemsControl ItemsSource="{x:Bind Windows}" Margin="20">
             <ItemsControl.ItemsPanel>
                 <ItemsPanelTemplate>

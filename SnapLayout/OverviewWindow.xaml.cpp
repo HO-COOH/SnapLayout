@@ -133,6 +133,8 @@ namespace winrt::SnapLayout::implementation
 			static_cast<int>(layout.height), 
 			0
 		);
+		layout.AddPadding(8.f);
+		layout.UnscaleForDpi(GetDpiForWindow(m_hwnd));
 		m_acrylicVisual.StartSizeAnimation({ 10.f, 10.f }, { layout.width, layout.height });
 		co_await winrt::resume_on_signal(m_windowSelectedEvent.get());
 		DebugLog(m_isWindowSelected ? "Overview window user selected window\n" : "Overview window user dismissed\n");

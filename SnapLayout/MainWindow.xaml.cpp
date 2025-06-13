@@ -48,124 +48,124 @@ namespace winrt::SnapLayout::implementation
 		Instance = *this;
 	}
 
+	void MainWindow::onMouseMove(HWND hwnd, POINT point)
+	{
+		if (!WindowDragEventListener::HasWindowDragging())
+			return;
+
+		//TODO: This move needs to be corrected with an offset
+		if (thumbnailWindow)
+		{
+			auto draggedPointOffset = WindowDragEventListener::GetDraggedWindowPointOffset();
+			thumbnailWindow->Move(point.x - draggedPointOffset.x, point.y - draggedPointOffset.y);
+		}
+
+		auto const draggedWindow = WindowDragEventListener::GetDraggedWindow();
+		auto const dpi = GetDpiForWindow(hwnd);
+		POINT clientPoint = point;
+		ScreenToClient(g_instance, &clientPoint);
+		for (
+			auto hitTest = winrt::Microsoft::UI::Xaml::Media::VisualTreeHelper::FindElementsInHostCoordinates(
+			UnscalePointForDpi<>(clientPoint, dpi),
+			RootGrid()
+			); auto hitTestElement : hitTest)
+		{
+			if (auto button = hitTestElement.try_as<winrt::Microsoft::UI::Xaml::Controls::Button>())
+			{
+				//put button to hover state, show window thumbnail visual
+
+				if (!m_previousButton)
+				{
+					WindowDragEventListener::HideDraggedWindow(point, dpi);
+				}
+
+				if (button != m_previousButton)
+				{
+					//hovered on a new button
+					if (m_previousButton)
+						winrt::Microsoft::UI::Xaml::VisualStateManager::GoToState(m_previousButton, L"Normal", true);
+					winrt::Microsoft::UI::Xaml::VisualStateManager::GoToState(button, L"PointerOver", true);
+					m_previousButton = button;
+					m_previousButtonWindowPlacement = LayoutImpl(m_buttonLayoutCache.GetLayout(button),
+						MonitorFromWindow(g_instance, MONITOR_DEFAULTTONEAREST),
+						draggedWindow
+					);
+					thumbnailWindow = &ThumbnailVisualContainerWindow::Instance();
+				}
+
+				return;
+			}
+		}
+	}
+
+	void MainWindow::onMouseLeave()
+	{
+		//ShowWindow(WindowDragEventListener::g_hwndTracked, SW_SHOW);
+		if (m_previousButton)
+		{
+			winrt::Microsoft::UI::Xaml::VisualStateManager::GoToState(m_previousButton, L"Normal", true);
+			m_previousButton = nullptr;
+		}
+		winrt::get_self<winrt::SnapLayout::implementation::AcrylicVisualWindow>(winrt::SnapLayout::implementation::AcrylicVisualWindow::Instance)->Hide();
+		//ThumbnailVisualContainerWindow::Instance().Hide();
+		if (thumbnailWindow)
+		{
+			thumbnailWindow->Hide();
+			thumbnailWindow = nullptr;
+		}
+	}
+
+	void MainWindow::onLButtonUp()
+	{
+		if (!WindowDragEventListener::HasWindowDragging())
+			return;
+
+		OnDismiss();
+
+		auto const draggedWindow = WindowDragEventListener::GetDraggedWindow();
+		if (!draggedWindow)
+			return;
+
+
+		if (m_previousButton)
+		{
+			winrt::check_bool(SetWindowPos(
+				draggedWindow,
+				nullptr,
+				static_cast<int>(m_previousButtonWindowPlacement.x),
+				static_cast<int>(m_previousButtonWindowPlacement.y),
+				static_cast<int>(m_previousButtonWindowPlacement.width),
+				static_cast<int>(m_previousButtonWindowPlacement.height),
+				SWP_NOACTIVATE
+			));
+			if (thumbnailWindow)
+			{
+				thumbnailWindow->Hide();
+				thumbnailWindow = nullptr;
+			}
+
+			layoutOtherWindows();
+
+			winrt::Microsoft::UI::Xaml::VisualStateManager::GoToState(m_previousButton, L"Normal", true);
+			m_previousButton = nullptr;
+		}
+	}
+
 	LRESULT MainWindow::subclassProc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam, [[maybe_unused]] UINT_PTR uIdSubClass, DWORD_PTR dwRefData)
 	{
 		switch (msg)
 		{
 			case WM_MOUSEMOVE:
-			{
-				if (!WindowDragEventListener::HasWindowDragging())
-					break;
-
-				auto const draggedWindow = WindowDragEventListener::GetDraggedWindow();
-
-				auto self = reinterpret_cast<MainWindow*>(dwRefData);
-				auto const dpi = GetDpiForWindow(hwnd);
-				POINT point{ GET_X_LPARAM(lparam), GET_Y_LPARAM(lparam) };
-				POINT clientPoint = point;
-				ScreenToClient(g_instance, &clientPoint);
-				auto hitTest = winrt::Microsoft::UI::Xaml::Media::VisualTreeHelper::FindElementsInHostCoordinates(
-					UnscalePointForDpi<>(clientPoint, dpi),
-					self->RootGrid()
-				);
-
-				//TODO: This move needs to be corrected with an offset
-				if (self->thumbnailWindow)
-				{
-					auto draggedPointOffset = WindowDragEventListener::GetDraggedWindowPointOffset();
-					self->thumbnailWindow->Move(point.x - draggedPointOffset.x, point.y - draggedPointOffset.y);
-				}
-				for (auto hitTestElement : hitTest)
-				{
-					if (auto button = hitTestElement.try_as<winrt::Microsoft::UI::Xaml::Controls::Button>())
-					{
-						//put button to hover state, show window thumbnail visual
-
-						if (!self->m_previousButton)
-						{
-							WindowDragEventListener::HideDraggedWindow(point, dpi);
-						}
-
-						if (button == self->m_previousButton)
-						{
-
-						}
-						else
-						{
-							//hovered on a new button
-							if (self->m_previousButton)
-								winrt::Microsoft::UI::Xaml::VisualStateManager::GoToState(self->m_previousButton, L"Normal", true);
-							winrt::Microsoft::UI::Xaml::VisualStateManager::GoToState(button, L"PointerOver", true);
-							self->m_previousButton = button;
-							self->m_previousButtonWindowPlacement = LayoutImpl(self->GetButtonLayoutResult(button),
-								MonitorFromWindow(g_instance, MONITOR_DEFAULTTONEAREST),
-								draggedWindow
-							);
-							self->thumbnailWindow = &ThumbnailVisualContainerWindow::Instance();
-
-						}
-
-						break;
-					}
-				}
+				reinterpret_cast<MainWindow*>(dwRefData)->onMouseMove(hwnd, { GET_X_LPARAM(lparam), GET_Y_LPARAM(lparam) });
 				break;
-			}
-
 			case WM_MOUSELEAVE:
-			{
-			
-				//ShowWindow(WindowDragEventListener::g_hwndTracked, SW_SHOW);
-				auto self = reinterpret_cast<MainWindow*>(dwRefData);
-				if (self->m_previousButton)
-				{
-					winrt::Microsoft::UI::Xaml::VisualStateManager::GoToState(self->m_previousButton, L"Normal", true);
-					self->m_previousButton = nullptr;
-				}
-				winrt::get_self<winrt::SnapLayout::implementation::AcrylicVisualWindow>(winrt::SnapLayout::implementation::AcrylicVisualWindow::Instance)->Hide();
-				//ThumbnailVisualContainerWindow::Instance().Hide();
-				if (self->thumbnailWindow)
-				{
-					self->thumbnailWindow->Hide();
-					self->thumbnailWindow = nullptr;
-				}
+				reinterpret_cast<MainWindow*>(dwRefData)->onMouseLeave();
 				break;
-			}
-
 			case WM_LBUTTONUP:
-			{
-				if(!WindowDragEventListener::HasWindowDragging())
-					break;
-
-				auto self = reinterpret_cast<MainWindow*>(dwRefData);
-				self->OnDismiss();
-
-				auto const draggedWindow = WindowDragEventListener::GetDraggedWindow();
-				if (!draggedWindow)
-					break;
-
-	
-				if (self->m_previousButton)
-				{
-					winrt::check_bool(SetWindowPos(
-						draggedWindow, 
-						nullptr,
-						static_cast<int>(self->m_previousButtonWindowPlacement.x),
-						static_cast<int>(self->m_previousButtonWindowPlacement.y),
-						static_cast<int>(self->m_previousButtonWindowPlacement.width),
-						static_cast<int>(self->m_previousButtonWindowPlacement.height),
-						SWP_NOACTIVATE
-					));
-					if (self->thumbnailWindow)
-					{
-						self->thumbnailWindow->Hide();
-						self->thumbnailWindow = nullptr;
-					}
-
-					self->layoutOtherWindows();
-					self->m_previousButton = nullptr;
-				}
+				reinterpret_cast<MainWindow*>(dwRefData)->onLButtonUp();
 				break;
-			}
+			default:
+				break;
 		}
 		return DefSubclassProc(hwnd, msg, wparam, lparam);
 	}
@@ -178,86 +178,13 @@ namespace winrt::SnapLayout::implementation
 		{
 			if (auto button = parentGridChild.as<winrt::Microsoft::UI::Xaml::Controls::Button>(); button != previousButtonCopy)
 			{
-				LayoutResult overviewWindowPlacement = GetButtonLayoutResult(button);
+				LayoutResult overviewWindowPlacement = m_buttonLayoutCache.GetLayout(button);
 				ConvertLayoutToMonitorWindowPlacement(overviewWindowPlacement, monitor);
 				if (!(co_await m_overviewWindowImpl->ShowAndPlaceWindowAsync(overviewWindowPlacement)))
 					break;
 			}
 		}
 		co_return;
-	}
-
-	LayoutResult MainWindow::GetButtonLayoutResult(winrt::Microsoft::UI::Xaml::Controls::Button const& button)
-	{
-		class ScopedTimer
-		{
-			std::chrono::steady_clock::time_point m_startTime = std::chrono::steady_clock::now();
-		public:
-			~ScopedTimer()
-			{
-				auto const endTime = std::chrono::steady_clock::now();
-				OutputDebugStringA(std::format("Took {} ms\n", std::chrono::duration_cast<std::chrono::microseconds>(endTime - m_startTime).count()).data());
-			}
-		};
-		//ScopedTimer t;
-		
-		if (auto cached = cache.find(button); cached != cache.end())
-		{
-			return cached->second;
-		}
-
-		auto parentGrid = button.Parent().as<winrt::Microsoft::UI::Xaml::Controls::Grid>();
-		/*Instead of calculating rowTotal, buttonRow in two pass, we can hand write one for loop, better performance*/
-
-		auto const buttonRow = winrt::Microsoft::UI::Xaml::Controls::Grid::GetRow(button);
-		auto const buttonRowSpan = winrt::Microsoft::UI::Xaml::Controls::Grid::GetRowSpan(button);
-
-		float rowBeforeButton{}, rowTotal{}, buttonRowTotal{};
-		for (int i = 0; auto row : parentGrid.RowDefinitions())
-		{
-			float const current = row.Height().Value;
-			rowTotal += current;
-			if (i < buttonRow)
-				rowBeforeButton += current;
-			else if (i >= buttonRow && i < buttonRow + buttonRowSpan)
-				buttonRowTotal += current;
-			++i;
-		}
-		if (rowTotal == 0)
-		{
-			//means we only have 1 row, and the button is occupying the whole row
-			rowTotal = 1;
-			buttonRowTotal = 1;
-		}
-
-		auto const buttonCol = winrt::Microsoft::UI::Xaml::Controls::Grid::GetColumn(button);
-		auto const buttonColSpan = winrt::Microsoft::UI::Xaml::Controls::Grid::GetColumnSpan(button);
-		float colBeforeButton{}, colTotal{}, buttonColTotal{};
-		for (int i = 0; auto col : parentGrid.ColumnDefinitions())
-		{
-			float const current = col.Width().Value;
-			colTotal += current;
-			if (i < buttonCol)
-				colBeforeButton += current;
-			else if (i >= buttonCol && i < buttonCol + buttonColSpan)
-				buttonColTotal += current;
-			++i;
-		}
-
-		if (colTotal == 0)
-		{
-			colTotal = 1;
-			buttonColTotal = 1;
-		}
-
-		auto ret = LayoutResult{ 
-			.x = (colBeforeButton / colTotal), 
-			.y = (rowBeforeButton / rowTotal),
-			.width = (buttonColTotal / colTotal),
-			.height = (buttonRowTotal / rowTotal)
-		};
-		cache[button] = ret;
-		return ret;
 	}
 
 	MainWindow* MainWindow::GetInstance()
@@ -308,15 +235,24 @@ namespace winrt::SnapLayout::implementation
 		//	.Height = windowSize.Height 
 		//});
 
+		//We move the window first to the target monitor, then resize it, otherwise the size will be scaled to an incorrect value by system
+		winrt::check_bool(SetWindowPos(g_instance,
+			thumbnailWindow ? thumbnailWindow->GetHwnd() : nullptr,
+			info.rcWork.left + (info.rcWork.right - info.rcWork.left - windowSize.Width) / 2,
+			info.rcWork.top,
+			0, 0,
+			SWP_NOSIZE | SWP_NOACTIVATE));
+
 		winrt::check_bool(SetWindowPos(
 			g_instance,
-			nullptr,
+			thumbnailWindow? thumbnailWindow->GetHwnd() : nullptr,
 			info.rcWork.left + (info.rcWork.right - info.rcWork.left - windowSize.Width) / 2,
 			info.rcWork.top,
 			windowSize.Width,
 			windowSize.Height,
-			SWP_NOACTIVATE | SWP_NOZORDER
+			SWP_NOACTIVATE
 		));
+		DebugLog(L"MainWindow W: {}, H: {}\n", windowSize.Width, windowSize.Height);
 	}
 
 	void MainWindow::OnGridExitAnimationCompleted(

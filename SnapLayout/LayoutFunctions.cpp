@@ -9,17 +9,15 @@
 
 LayoutResult LayoutImpl(LayoutResult layoutResult, HMONITOR monitor, HWND draggedWindow)
 {
+	constexpr static auto Padding = 10.f;
 	LayoutResult windowPlacement = layoutResult;
-
-	//leave some padding
-	if (layoutResult.height >= 0.99f)
-		layoutResult.height -= 0.01f;
-	layoutResult.x = std::clamp(layoutResult.x, 0.005f, 0.995f);
-	layoutResult.y = std::clamp(layoutResult.y, 0.005f, 0.995f);
 
 	// set acrylic visual window
 	auto const& rcWork = Monitor{ monitor }.GetInfo().rcWork;
 	ConvertLayoutToMonitorWindowPlacement(layoutResult, rcWork);
+
+	//leave some padding
+	layoutResult.AddPadding(10.f);
 	ConvertLayoutToMonitorWindowPlacement(windowPlacement, rcWork);
 
 	auto const dpiX = Monitor{ monitor }.GetDpi();

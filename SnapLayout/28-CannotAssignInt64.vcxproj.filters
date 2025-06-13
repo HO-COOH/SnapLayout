@@ -7,11 +7,11 @@
     <Page Include="AcrylicVisualWindow.xaml">
       <Filter>Window</Filter>
     </Page>
-    <Page Include="MainWindow.xaml">
-      <Filter>Window</Filter>
-    </Page>
     <Page Include="OverviewWindow.xaml">
       <Filter>Window\OverviewWindow</Filter>
+    </Page>
+    <Page Include="MainWindow.xaml">
+      <Filter>Window\MainWindow</Filter>
     </Page>
   </ItemGroup>
   <ItemGroup>
@@ -60,6 +60,9 @@
     </ClCompile>
     <ClCompile Include="OverviewWindowFilter.cpp">
       <Filter>Window\OverviewWindow</Filter>
+    </ClCompile>
+    <ClCompile Include="ButtonLayoutCache.cpp">
+      <Filter>Window\MainWindow</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -117,6 +120,9 @@
     <ClInclude Include="OverviewWindowFilter.h">
       <Filter>Window\OverviewWindow</Filter>
     </ClInclude>
+    <ClInclude Include="ButtonLayoutCache.h">
+      <Filter>Window\MainWindow</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <Image Include="Assets\Wide310x150Logo.scale-200.png">
@@ -159,6 +165,9 @@
     </Filter>
     <Filter Include="Window\OverviewWindow">
       <UniqueIdentifier>{5b400b4b-509f-48e0-9f69-e721d8c83988}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Window\MainWindow">
+      <UniqueIdentifier>{8ca0f5d4-cc22-4615-84ff-19ac8bd03f74}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
   <ItemGroup>

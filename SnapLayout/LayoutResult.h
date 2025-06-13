@@ -8,4 +8,7 @@ struct LayoutResult
 	float height;
 
 	void UnscaleForDpi(UINT dpi);
+	
+	void AddPadding(float uniformPadding);
+	void AddPadding(winrt::Microsoft::UI::Xaml::Thickness padding);
 };

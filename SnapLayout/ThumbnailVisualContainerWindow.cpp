@@ -47,6 +47,11 @@ ThumbnailVisualContainerWindow::ThumbnailVisualContainerWindow() : BaseWindow{
 
 }
 
+HWND ThumbnailVisualContainerWindow::GetHwnd() const noexcept
+{
+	return m_hwnd.get();
+}
+
 void ThumbnailVisualContainerWindow::SetVisual(HWND sourceHwnd, winrt::Windows::Foundation::Numerics::float2 animationCenter)
 {
 	Show();

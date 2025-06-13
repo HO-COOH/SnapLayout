@@ -118,6 +118,7 @@
       <SubType>Code</SubType>
     </ClInclude>
     <ClInclude Include="BaseWindow.hpp" />
+    <ClInclude Include="ButtonLayoutCache.h" />
     <ClInclude Include="DebugHelper.hpp" />
     <ClInclude Include="DirectXFactory.h" />
     <ClInclude Include="DpiUtils.hpp" />
@@ -171,6 +172,7 @@
       <DependentUpon>AcrylicVisualWindow.xaml</DependentUpon>
       <SubType>Code</SubType>
     </ClCompile>
+    <ClCompile Include="ButtonLayoutCache.cpp" />
     <ClCompile Include="DirectXFactory.cpp" />
     <ClCompile Include="DwmPrivateApi.cpp" />
     <ClCompile Include="FreezableThumbnailVisual.cpp" />

@@ -25,7 +25,7 @@ public:
 
 	void Show();
 	void Hide(bool animation = true);
-
+	[[nodiscard]] HWND GetHwnd() const noexcept;
 	void Move(int x, int y);
 };
 
