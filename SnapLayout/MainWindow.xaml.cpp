@@ -202,12 +202,14 @@ namespace winrt::SnapLayout::implementation
 		m_hasExitCompleted = true;
 		moveToMonitor(draggedWindowMonitor);
 		ShowWindow(g_instance, SW_SHOWNOACTIVATE);
+		WindowDragEventListener::SubscribeWindowMonitorChangeEvent(this);
 		m_appWindow.Presenter().as<winrt::Microsoft::UI::Windowing::OverlappedPresenter>().IsAlwaysOnTop(true);
 		GridAppearAnimation().Begin();
 	}
 
 	void MainWindow::OnDismiss()
 	{
+		WindowDragEventListener::UnsubscribeWindowMonitorChangeEvent();
 		m_shouldHideWindow = true;
 		GridAppearAnimation().Stop();
 		if (m_hasExitCompleted)
@@ -263,6 +265,11 @@ namespace winrt::SnapLayout::implementation
 		m_hasExitCompleted = true;
 		if (m_shouldHideWindow)
 			AppWindow().Hide();
+	}
+
+	void MainWindow::WindowMonitorChanged(HMONITOR monitor)
+	{
+		moveToMonitor(monitor);
 	}
 }
 

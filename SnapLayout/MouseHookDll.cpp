@@ -19,4 +19,5 @@ void MouseHookDll::Unset()
 bool MouseHookDll::HasLButtonDown()
 {
 	return gInstance->hasLButtonDown;
+	return true;
 }

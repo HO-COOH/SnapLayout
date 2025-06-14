@@ -4,12 +4,13 @@
 #include "OverviewWindow.xaml.h"
 #include "LayoutResult.h"
 #include "ButtonLayoutCache.h"
+#include "INotifyWindowMonitorChange.hpp"
 
 class ThumbnailVisualContainerWindow;
 
 namespace winrt::SnapLayout::implementation
 {
-    struct MainWindow : MainWindowT<MainWindow>
+    struct MainWindow : MainWindowT<MainWindow>, INotifyWindowMonitorChange
     {
         MainWindow();
 
@@ -38,6 +39,8 @@ namespace winrt::SnapLayout::implementation
             winrt::Windows::Foundation::IInspectable const& sender,
             winrt::Windows::Foundation::IInspectable const& arg
 		);
+
+        void WindowMonitorChanged(HMONITOR monitor) override;
 
         LayoutResult m_previousButtonWindowPlacement;
         static MainWindow* GetInstance();

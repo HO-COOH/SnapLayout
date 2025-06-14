@@ -125,6 +125,7 @@
     <ClInclude Include="DwmPrivateApi.h" />
     <ClInclude Include="FreezableThumbnailVisual.h" />
     <ClInclude Include="INotifyWindowEvent.hpp" />
+    <ClInclude Include="INotifyWindowMonitorChange.hpp" />
     <ClInclude Include="Interop.hpp" />
     <ClInclude Include="LayoutFunctions.h" />
     <ClInclude Include="LayoutResult.h" />

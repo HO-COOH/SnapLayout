@@ -1,6 +1,7 @@
 #pragma once
 #include <wil/resource.h>
 #include "INotifyWindowEvent.hpp"
+#include "INotifyWindowMonitorChange.hpp"
 
 class WindowDragEventListener
 {
@@ -10,8 +11,10 @@ class WindowDragEventListener
 	RECT g_rcInitial;
 	RECT g_beforeHide;
 	HWND g_hwndTracked;
+	HMONITOR g_hwndTrackedMonitor;
 	POINT g_draggedWindowCursorPoint;
 	INotifyWindowEvent* g_notifyWindowEvent{ nullptr };
+	INotifyWindowMonitorChange* g_notifyWindowMonitorChange{ nullptr };
 
 	static VOID CALLBACK WinEventProc(HWINEVENTHOOK hWinEventHook, DWORD event, HWND hwnd,
 		LONG idObject, LONG idChild, DWORD dwEventThread,
@@ -21,12 +24,15 @@ class WindowDragEventListener
 	static void onMoveSizeEnd(DWORD event, HWND hwnd, LONG idObject, LONG idChild, DWORD dwEventThread, DWORD dwmsEventTime);
 	static void onObjectCreate(DWORD event, HWND hwnd, LONG idObject, LONG idChild, DWORD dwEventThread, DWORD dwmsEventTime);
 	static void onObjectDestroy(DWORD event, HWND hwnd, LONG idObject, LONG idChild, DWORD dwEventThread, DWORD dwmsEventTime);
+	static void onObjectLocationChange(DWORD event, HWND hwnd, LONG idObject, LONG idChild, DWORD dwEventThread, DWORD dwmsEventTime);
 public:
 	WindowDragEventListener(private_ctor_t, HWINEVENTHOOK hook);
 	static void Set();
 	static void Unset();
 	static void SubscribeWindowEvent(INotifyWindowEvent* handler);
 	static void UnsubscribeWindowEvent(INotifyWindowEvent* handler);
+	static void SubscribeWindowMonitorChangeEvent(INotifyWindowMonitorChange* handler);
+	static void UnsubscribeWindowMonitorChangeEvent();
 	static HWND GetDraggedWindow();
 	static bool HasWindowDragging();
 	static POINT GetDraggedWindowPointOffset();
