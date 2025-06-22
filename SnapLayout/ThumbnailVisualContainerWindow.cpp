@@ -7,6 +7,7 @@
 #include <windows.ui.composition.interop.h>
 #include "DebugHelper.hpp"
 #include <dwmapi.h>
+#include "OverviewWindow.xaml.h"
 
 ThumbnailVisualContainerWindow::ThumbnailVisualContainerWindow() : BaseWindow{
 		L"ThumbnailVisualContainer",
@@ -141,8 +142,13 @@ void ThumbnailVisualContainerWindow::Hide(bool animation)
 	}
 	auto scopedBatch = compositor.CreateScopedBatch(winrt::Windows::UI::Composition::CompositionBatchTypes::Animation);
 	scopedBatch.Completed([this](auto&&...) { 
+		ShowWindow(m_hwnd.get(), SW_HIDE);
 		ShowWindow(currentVisualHwnd, SW_SHOWNOACTIVATE);
-		ShowWindow(m_hwnd.get(), SW_HIDE); 
+		if (IsWindowVisible(winrt::SnapLayout::implementation::OverviewWindow::Instance))
+		{
+			SetActiveWindow(winrt::SnapLayout::implementation::OverviewWindow::Instance);
+			SetForegroundWindow(winrt::SnapLayout::implementation::OverviewWindow::Instance);
+		}
 	});
 	visual->StartAnimation(L"Scale", restoreAnimation);
 	scopedBatch.End();

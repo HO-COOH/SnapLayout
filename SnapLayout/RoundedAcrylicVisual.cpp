@@ -37,6 +37,13 @@ void RoundedAcrylicVisual::StartSizeAnimation(winrt::Windows::Foundation::Numeri
 	m_clip.StartAnimation(L"Bottom", clipBottomAnimation);
 }
 
+void RoundedAcrylicVisual::Size(winrt::Windows::Foundation::Numerics::float2 size)
+{
+	m_placementVisual.Size(size);
+	m_clip.Right(size.x);
+	m_clip.Bottom(size.y);
+}
+
 void RoundedAcrylicVisual::StartOffsetAnimation(winrt::Windows::Foundation::Numerics::float2 from, winrt::Windows::Foundation::Numerics::float2 to)
 {
 	auto placementVisualOffsetAnimation = m_compositor.CreateVector2KeyFrameAnimation();

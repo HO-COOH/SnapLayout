@@ -51,7 +51,9 @@ namespace winrt::SnapLayout::implementation
 		auto element = sender.as<winrt::Microsoft::UI::Xaml::UIElement>();
 		auto visual = winrt::Microsoft::UI::Xaml::Hosting::ElementCompositionPreview::GetElementVisual(element);
 		auto compositor = visual.Compositor();
-
+		m_opacityAnimation = compositor.CreateScalarKeyFrameAnimation();
+		m_opacityAnimation.InsertKeyFrame(0.f, 0.f);
+		m_opacityAnimation.InsertKeyFrame(1.f, 1.f);
 		m_backdropLink = winrt::Microsoft::UI::Content::ContentExternalBackdropLink::Create(compositor);
 		m_backdropLink.ExternalBackdropBorderMode(winrt::Microsoft::UI::Composition::CompositionBorderMode::Soft);
 		m_controller = {};
@@ -59,7 +61,7 @@ namespace winrt::SnapLayout::implementation
 		m_controller.SetSystemBackdropConfiguration(AcrylicVisualWindow::m_configuration);
 		m_controller.Kind(winrt::Microsoft::UI::Composition::SystemBackdrops::DesktopAcrylicKind::Thin);
 		m_acrylicVisual = RoundedAcrylicVisual{ m_backdropLink.PlacementVisual(), compositor, AcrylicVisualWindow::CornerRadius };
-		winrt::Microsoft::UI::Xaml::Hosting::ElementCompositionPreview::SetElementChildVisual(element, m_acrylicVisual);
+		winrt::Microsoft::UI::Xaml::Hosting::ElementCompositionPreview::SetElementChildVisual(element, m_acrylicVisual.Get());
 		
 		//TODO: debug only
 		//ShowAndPlaceWindowAsync({ .width = 1000, .height = 2100 });
@@ -79,28 +81,7 @@ namespace winrt::SnapLayout::implementation
 
 	winrt::Windows::Foundation::Collections::IObservableVector<SnapLayout::WindowModel> OverviewWindow::Windows()
 	{
-		return m_windows;
-	}
-
-	void OverviewWindow::OnWindowCreated(HWND createdWindow)
-	{
-		if (IsInFilter(createdWindow))
-			return;
-
-		SnapLayout::WindowModel model{ reinterpret_cast<uint64_t>(createdWindow) };
-		m_windows.Append(model);
-		m_windowRef[createdWindow] = winrt::make_weak(model);
-	}
-
-	void OverviewWindow::OnWindowDestroyed(HWND destroyedWindow)
-	{
-		if (auto iter = m_windowRef.find(destroyedWindow); iter != m_windowRef.end())
-		{
-			uint32_t index{};
-			m_windows.IndexOf(iter->second.get(), index);
-			m_windows.RemoveAt(index);
-			m_windowRef.erase(destroyedWindow);
-		}
+		return m_overviewData.Get();
 	}
 
 	void OverviewWindow::WindowThumbnail_Click(
@@ -108,22 +89,30 @@ namespace winrt::SnapLayout::implementation
 		winrt::Microsoft::UI::Xaml::RoutedEventArgs const&
 	)
 	{
-		winrt::get_self<WindowModel>(sender.as<winrt::Microsoft::UI::Xaml::Controls::Button>()
-			.DataContext()
-			.as<winrt::SnapLayout::WindowModel>())->SetWindowPos(m_windowPlacement);
+		auto windowModelImpl = winrt::get_self<WindowModel>(sender.as<winrt::Microsoft::UI::Xaml::Controls::Button>()
+				.DataContext()
+				.as<winrt::SnapLayout::WindowModel>());
+		windowModelImpl->SetWindowPos(m_windowPlacement);
+		m_overviewData.OnWindowDestroyed(reinterpret_cast<HWND>(windowModelImpl->Handle()));
 		m_isWindowSelected = true;
 		Hide();
 		winrt::check_bool(SetEvent(m_windowSelectedEvent.get()));
 	}
 
-	winrt::Windows::Foundation::IAsyncOperation<bool> OverviewWindow::ShowAndPlaceWindowAsync(LayoutResult layout)
+	winrt::Windows::Foundation::IAsyncOperation<bool> OverviewWindow::ShowAndPlaceWindowAsync(LayoutResult layout, bool initWindow, HWND excludeWindow)
 	{
 		m_windowPlacement = layout;
 		m_isWindowSelected = false;
 		m_windowSelectedEvent.attach(CreateEvent(nullptr, false, false, nullptr));
-		initWindows();
-		WindowDragEventListener::SubscribeWindowEvent(this);
+		if (initWindow)
+		{
+			m_overviewData.Clear();
+			m_overviewData.Refresh(excludeWindow);
+		}
+		WindowDragEventListener::SubscribeWindowEvent(&m_overviewData);
+		m_acrylicVisual.Size({layout.width, layout.height});
 		Activate();
+		SetActiveWindow(m_hwnd);
 		SetWindowPos(
 			m_hwnd, 
 			nullptr, 
@@ -135,7 +124,8 @@ namespace winrt::SnapLayout::implementation
 		);
 		layout.AddPadding(8.f);
 		layout.UnscaleForDpi(GetDpiForWindow(m_hwnd));
-		m_acrylicVisual.StartSizeAnimation({ 10.f, 10.f }, { layout.width, layout.height });
+		//m_acrylicVisual.StartSizeAnimation({ 10.f, 10.f }, { layout.width, layout.height });
+		m_acrylicVisual.Get().StartAnimation(L"Opacity", m_opacityAnimation);
 		co_await winrt::resume_on_signal(m_windowSelectedEvent.get());
 		DebugLog(m_isWindowSelected ? "Overview window user selected window\n" : "Overview window user dismissed\n");
 		co_return m_isWindowSelected;
@@ -143,46 +133,9 @@ namespace winrt::SnapLayout::implementation
 
 	void OverviewWindow::Hide()
 	{
-		WindowDragEventListener::UnsubscribeWindowEvent(this);
+		WindowDragEventListener::UnsubscribeWindowEvent(&m_overviewData);
 		ShowWindow(m_hwnd, SW_HIDE);
-		m_windows.Clear();
-		m_windowRef.clear();
-	}
-
-	void OverviewWindow::initWindows()
-	{
-		struct EnumData
-		{
-			DWORD explorerPid{};
-			OverviewWindow* self;
-
-			EnumData(OverviewWindow* self) : self{self}
-			{
-				HWND hShellWnd = FindWindow(L"Shell_TrayWnd", nullptr);
-				GetWindowThreadProcessId(hShellWnd, &explorerPid);
-			}
-		} data{ this };
-
-		EnumWindows(
-			+[](HWND hwnd, LPARAM lparam) -> BOOL
-			{
-				if (!IsWindowResizable(hwnd, true) || IsInFilter(hwnd))
-					return true;
-				
-				wchar_t className[MAX_PATH]{};
-				GetClassName(hwnd, className, std::size(className));
-				DWORD pid;
-				GetWindowThreadProcessId(hwnd, &pid);
-
-				auto enumData = reinterpret_cast<EnumData*>(lparam);
-				if (std::wstring_view{ className } == L"ApplicationFrameWindow" && pid == enumData->explorerPid)
-					return true;
-
-				enumData->self->OnWindowCreated(hwnd);
-				return true;
-			},
-			reinterpret_cast<LPARAM>(&data)
-		);
+		m_acrylicVisual.Get().Opacity(0.f);
 	}
 
 	//You cannot pass in an element that uses PlacementVisual
@@ -293,7 +246,7 @@ namespace winrt::SnapLayout::implementation
 			return;
 		
 		Hide();
-		winrt::check_bool(SetEvent(m_windowSelectedEvent.get()));
+		SetEvent(m_windowSelectedEvent.get());
 		args.Handled(true);
 	}
 }

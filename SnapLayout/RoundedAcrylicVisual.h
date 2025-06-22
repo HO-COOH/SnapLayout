@@ -24,9 +24,13 @@ public:
 		winrt::Windows::Foundation::Numerics::float2 to
 	);
 
-	operator winrt::Microsoft::UI::Composition::Visual() const
+	void Size(winrt::Windows::Foundation::Numerics::float2 size);
+
+	auto& Get() { return m_placementVisual; }
+
+	operator bool() const
 	{
-		return m_placementVisual;
+		return m_placementVisual != nullptr;
 	}
 
 	void Hide();

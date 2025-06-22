@@ -49,7 +49,7 @@ namespace winrt::SnapLayout::implementation
 		m_controller.SetSystemBackdropConfiguration(m_configuration);
 		m_controller.Kind(winrt::Microsoft::UI::Composition::SystemBackdrops::DesktopAcrylicKind::Thin);
 		m_acrylicVisual = RoundedAcrylicVisual{ m_backdropLink.PlacementVisual(), compositor, CornerRadius };
-		winrt::Microsoft::UI::Xaml::Hosting::ElementCompositionPreview::SetElementChildVisual(element, m_acrylicVisual);
+		winrt::Microsoft::UI::Xaml::Hosting::ElementCompositionPreview::SetElementChildVisual(element, m_acrylicVisual.Get());
 	}
 
 	void AcrylicVisualWindow::SetVisualPosition(LayoutResult finalLayoutPosition, HWND draggedWindow, UINT dpi, RECT rcWork)
@@ -84,7 +84,8 @@ namespace winrt::SnapLayout::implementation
 
 	void AcrylicVisualWindow::Hide()
 	{
-		m_acrylicVisual.Hide();
+		if (m_acrylicVisual)
+			m_acrylicVisual.Hide();
 		AppWindow().Hide();
 	}
 }

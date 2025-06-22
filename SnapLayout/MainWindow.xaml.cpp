@@ -19,6 +19,7 @@
 #include "DebugHelper.hpp"
 #include <ShellScalingApi.h>
 #include "OverviewWindowFilter.h"
+#include "MonitorWrapper.h"
 #pragma comment(lib, "Dwmapi.lib")
 #pragma comment(lib, "Comctl32.lib")
 
@@ -86,8 +87,9 @@ namespace winrt::SnapLayout::implementation
 						winrt::Microsoft::UI::Xaml::VisualStateManager::GoToState(m_previousButton, L"Normal", true);
 					winrt::Microsoft::UI::Xaml::VisualStateManager::GoToState(button, L"PointerOver", true);
 					m_previousButton = button;
-					m_previousButtonWindowPlacement = LayoutImpl(m_buttonLayoutCache.GetLayout(button),
-						MonitorFromWindow(g_instance, MONITOR_DEFAULTTONEAREST),
+					m_previousButtonWindowPlacement = LayoutImpl(
+						m_buttonLayoutCache.GetLayout(button),
+						Monitor::FromWindow(g_instance),
 						draggedWindow
 					);
 					thumbnailWindow = &ThumbnailVisualContainerWindow::Instance();
@@ -144,7 +146,7 @@ namespace winrt::SnapLayout::implementation
 				thumbnailWindow = nullptr;
 			}
 
-			layoutOtherWindows();
+			layoutOtherWindows(draggedWindow);
 
 			winrt::Microsoft::UI::Xaml::VisualStateManager::GoToState(m_previousButton, L"Normal", true);
 			m_previousButton = nullptr;
@@ -170,18 +172,19 @@ namespace winrt::SnapLayout::implementation
 		return DefSubclassProc(hwnd, msg, wparam, lparam);
 	}
 
-	winrt::fire_and_forget MainWindow::layoutOtherWindows()
+	winrt::fire_and_forget MainWindow::layoutOtherWindows(HWND excludeWindow)
 	{
 		auto previousButtonCopy = m_previousButton;
 		auto const monitor = MonitorFromWindow(g_instance, MONITOR_DEFAULTTONEAREST);
-		for (auto parentGridChild : previousButtonCopy.Parent().as<winrt::Microsoft::UI::Xaml::Controls::Grid>().Children())
+		for (bool initWindows = true; auto parentGridChild : previousButtonCopy.Parent().as<winrt::Microsoft::UI::Xaml::Controls::Grid>().Children())
 		{
 			if (auto button = parentGridChild.as<winrt::Microsoft::UI::Xaml::Controls::Button>(); button != previousButtonCopy)
 			{
 				LayoutResult overviewWindowPlacement = m_buttonLayoutCache.GetLayout(button);
 				ConvertLayoutToMonitorWindowPlacement(overviewWindowPlacement, monitor);
-				if (!(co_await m_overviewWindowImpl->ShowAndPlaceWindowAsync(overviewWindowPlacement)))
+				if (!(co_await m_overviewWindowImpl->ShowAndPlaceWindowAsync(overviewWindowPlacement, initWindows, excludeWindow)))
 					break;
+				initWindows = false;
 			}
 		}
 		co_return;
@@ -219,13 +222,10 @@ namespace winrt::SnapLayout::implementation
 		}
 	}
 
-	void MainWindow::moveToMonitor(HMONITOR monitor)
+	void MainWindow::moveToMonitor(Monitor const& monitor)
 	{
-		MONITORINFO info{ .cbSize = sizeof(info) };
-		winrt::check_bool(GetMonitorInfoW(monitor, &info));
-		
-		UINT dpi, dpiY;
-		winrt::check_hresult(GetDpiForMonitor(monitor, MDT_EFFECTIVE_DPI, &dpi, &dpiY));
+		auto const info = monitor.GetInfo();
+		auto const dpi = monitor.GetDpi();
 
 		winrt::Windows::Graphics::SizeInt32 windowSize{ ScaleForDpi<int>(1000, dpi), ScaleForDpi<int>(133, dpi) };
 		

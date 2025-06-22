@@ -7,6 +7,7 @@
 #include "INotifyWindowMonitorChange.hpp"
 
 class ThumbnailVisualContainerWindow;
+class Monitor;
 
 namespace winrt::SnapLayout::implementation
 {
@@ -45,8 +46,8 @@ namespace winrt::SnapLayout::implementation
         LayoutResult m_previousButtonWindowPlacement;
         static MainWindow* GetInstance();
     private:
-        void moveToMonitor(HMONITOR monitor);
-        winrt::fire_and_forget layoutOtherWindows();
+        void moveToMonitor(Monitor const& monitor);
+        winrt::fire_and_forget layoutOtherWindows(HWND excludeWindow);
         ThumbnailVisualContainerWindow* thumbnailWindow{ nullptr };
         winrt::SnapLayout::OverviewWindow m_overviewWindow;
         OverviewWindow* m_overviewWindowImpl = winrt::get_self<implementation::OverviewWindow>(m_overviewWindow);

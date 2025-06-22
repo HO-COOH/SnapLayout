@@ -64,6 +64,9 @@
     <ClCompile Include="ButtonLayoutCache.cpp">
       <Filter>Window\MainWindow</Filter>
     </ClCompile>
+    <ClCompile Include="OverviewData.cpp">
+      <Filter>Window\OverviewWindow</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="pch.h" />
@@ -125,6 +128,9 @@
     </ClInclude>
     <ClInclude Include="INotifyWindowMonitorChange.hpp">
       <Filter>Utils</Filter>
+    </ClInclude>
+    <ClInclude Include="OverviewData.h">
+      <Filter>Window\OverviewWindow</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
