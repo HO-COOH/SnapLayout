@@ -80,12 +80,9 @@ namespace winrt::SnapLayout::implementation
 					WindowDragEventListener::HideDraggedWindow(point, dpi);
 				}
 
-				if (button != m_previousButton)
+				if (m_previousButton != button)
 				{
 					//hovered on a new button
-					if (m_previousButton)
-						winrt::Microsoft::UI::Xaml::VisualStateManager::GoToState(m_previousButton, L"Normal", true);
-					winrt::Microsoft::UI::Xaml::VisualStateManager::GoToState(button, L"PointerOver", true);
 					m_previousButton = button;
 					m_previousButtonWindowPlacement = LayoutImpl(
 						m_buttonLayoutCache.GetLayout(button),
@@ -103,11 +100,7 @@ namespace winrt::SnapLayout::implementation
 	void MainWindow::onMouseLeave()
 	{
 		//ShowWindow(WindowDragEventListener::g_hwndTracked, SW_SHOW);
-		if (m_previousButton)
-		{
-			winrt::Microsoft::UI::Xaml::VisualStateManager::GoToState(m_previousButton, L"Normal", true);
-			m_previousButton = nullptr;
-		}
+		m_previousButton = nullptr;
 		winrt::get_self<winrt::SnapLayout::implementation::AcrylicVisualWindow>(winrt::SnapLayout::implementation::AcrylicVisualWindow::Instance)->Hide();
 		//ThumbnailVisualContainerWindow::Instance().Hide();
 		if (thumbnailWindow)
@@ -147,8 +140,6 @@ namespace winrt::SnapLayout::implementation
 			}
 
 			layoutOtherWindows(draggedWindow);
-
-			winrt::Microsoft::UI::Xaml::VisualStateManager::GoToState(m_previousButton, L"Normal", true);
 			m_previousButton = nullptr;
 		}
 	}
@@ -174,7 +165,7 @@ namespace winrt::SnapLayout::implementation
 
 	winrt::fire_and_forget MainWindow::layoutOtherWindows(HWND excludeWindow)
 	{
-		auto previousButtonCopy = m_previousButton;
+		auto previousButtonCopy = m_previousButton.Get();
 		auto const monitor = MonitorFromWindow(g_instance, MONITOR_DEFAULTTONEAREST);
 		for (bool initWindows = true; auto parentGridChild : previousButtonCopy.Parent().as<winrt::Microsoft::UI::Xaml::Controls::Grid>().Children())
 		{

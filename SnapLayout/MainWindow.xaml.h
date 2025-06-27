@@ -5,6 +5,7 @@
 #include "LayoutResult.h"
 #include "ButtonLayoutCache.h"
 #include "INotifyWindowMonitorChange.hpp"
+#include "LayoutButtonHolder.h"
 
 class ThumbnailVisualContainerWindow;
 class Monitor;
@@ -30,7 +31,7 @@ namespace winrt::SnapLayout::implementation
         void onMouseLeave();
         void onLButtonUp();
 
-        winrt::Microsoft::UI::Xaml::Controls::Button m_previousButton{ nullptr };
+        LayoutButtonHolder m_previousButton;
 
         void OnShow(HMONITOR draggedWindowMonitor);
         void OnDismiss();

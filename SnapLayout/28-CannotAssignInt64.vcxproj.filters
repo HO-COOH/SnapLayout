@@ -27,7 +27,6 @@
     <ClCompile Include="pch.cpp" />
     <ClCompile Include="$(GeneratedFilesDir)module.g.cpp" />
     <ClCompile Include="DirectXFactory.cpp" />
-    <ClCompile Include="LayoutFunctions.cpp" />
     <ClCompile Include="DwmPrivateApi.cpp">
       <Filter>PrivateApi</Filter>
     </ClCompile>
@@ -67,11 +66,16 @@
     <ClCompile Include="OverviewData.cpp">
       <Filter>Window\OverviewWindow</Filter>
     </ClCompile>
+    <ClCompile Include="LayoutFunctions.cpp">
+      <Filter>Utils</Filter>
+    </ClCompile>
+    <ClCompile Include="LayoutButtonHolder.cpp">
+      <Filter>Window\MainWindow</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="pch.h" />
     <ClInclude Include="DirectXFactory.h" />
-    <ClInclude Include="LayoutFunctions.h" />
     <ClInclude Include="DwmPrivateApi.h">
       <Filter>PrivateApi</Filter>
     </ClInclude>
@@ -131,6 +135,12 @@
     </ClInclude>
     <ClInclude Include="OverviewData.h">
       <Filter>Window\OverviewWindow</Filter>
+    </ClInclude>
+    <ClInclude Include="LayoutFunctions.h">
+      <Filter>Utils</Filter>
+    </ClInclude>
+    <ClInclude Include="LayoutButtonHolder.h">
+      <Filter>Window\MainWindow</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
